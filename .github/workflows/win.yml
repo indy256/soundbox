@@ -2,7 +2,7 @@ name: Windows
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
       - '.github/**'
       - '!.github/workflows/win.yml'
@@ -16,7 +16,6 @@ jobs:
     env:
       VC: "call vcvars32.bat && cd Libraries"
       QT_VER: "6.4.0"
-      ONLY_CACHE: "false"
       MANUAL_CACHING: "2"
       AUTO_CACHING: "false"
     steps:
@@ -38,11 +37,13 @@ jobs:
           echo "Convert unix path to win path"
           p=`pwd | sed 's#^/[d]#d:#g' |sed 's#/#\\\\#g'`
           echo "LibrariesPath=$p" >> $GITHUB_ENV
+
       - name: Save msbuild version
         shell: cmd
         run: |
           call vcvars32.bat
           msbuild -version > CACHE_KEY.txt
+
       - name: Generate cache key
         shell: bash
         run: |
@@ -52,6 +53,7 @@ jobs:
             echo `md5sum $thisFile | awk '{ print $1 }'` >> CACHE_KEY.txt
           fi
           echo "CACHE_KEY=`md5sum CACHE_KEY.txt | awk '{ print $1 }'`" >> $GITHUB_ENV
+
       - name: Qt cache
         id: cache-qt
         uses: actions/cache@v3
@@ -83,6 +85,7 @@ jobs:
           -nomake tests ^
           -optimize-size ^
           -platform win32-msvc
+
       - name: Qt build
         if: steps.cache-qt.outputs.cache-hit != 'true'
         shell: cmd
@@ -91,16 +94,15 @@ jobs:
           cd qt-sources
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
           cmake --install .
+
       - name: SoundBox build
         shell: cmd
-        if: env.ONLY_CACHE == 'false'
         run: |
           cd %REPO_NAME%
           cmake -A Win32 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
           call vcvars32.bat
-          dir
           msbuild -m soundbox.sln /nologo /p:Configuration=Release,Platform=Win32
-          dir Release
+
       - uses: actions/upload-artifact@v3
         name: Upload artifact
         with:
