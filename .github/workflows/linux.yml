@@ -74,7 +74,7 @@ jobs:
         id: cache-qt
         uses: actions/cache@v3
         with:
-          path: ${{ env.LibrariesPath }}/Qt-${{ env.QT_VER }}
+          path: ${{ env.LibrariesPath }}/qt-build
           key: ${{ runner.OS }}-qt-${{ env.CACHE_KEY }}
 
       - name: Qt build
