@@ -1,0 +1,110 @@
+name: Linux
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '.github/**'
+      - '!.github/workflows/linux.yml'
+  pull_request:
+    paths-ignore:
+      - '.github/**'
+      - '!.github/workflows/linux.yml'
+jobs:
+  build-linux:
+    name: Ubuntu
+    runs-on: ubuntu-18.04
+    env:
+      GIT: "https://github.com"
+      QT_VER: "6.4.0"
+      MANUAL_CACHING: "1"
+      AUTO_CACHING: "false"
+    steps:
+      - name: Get repository name
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install software-properties-common -y && \
+          sudo add-apt-repository ppa:git-core/ppa -y && \
+          sudo apt-get update && \
+          sudo apt-get install git libexif-dev liblzma-dev libz-dev libssl-dev \
+          libgtk2.0-dev libice-dev libsm-dev libicu-dev libdrm-dev dh-autoreconf \
+          autoconf automake build-essential libxml2-dev libass-dev libfreetype6-dev \
+          libgpac-dev libsdl1.2-dev libtheora-dev libtool libva-dev libvdpau-dev \
+          libvorbis-dev libxcb1-dev libxcb-image0-dev libxcb-shm0-dev \
+          libxcb-xfixes0-dev libxcb-keysyms1-dev libxcb-icccm4-dev libatspi2.0-dev \
+          libxcb-render-util0-dev libxcb-util0-dev libxcb-xkb-dev libxrender-dev \
+          libasound-dev libpulse-dev libxcb-sync0-dev libxcb-randr0-dev libegl1-mesa-dev \
+          libx11-xcb-dev libffi-dev libncurses5-dev pkg-config texi2html bison yasm \
+          zlib1g-dev xutils-dev chrpath gperf wget -y --force-yes && \
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
+          sudo apt-get update && \
+          sudo apt-get install gcc-11 g++-11 -y && \
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 60 && \
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 60 && \
+          sudo update-alternatives --config gcc && \
+          sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test -y
+
+      - name: Clone
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          path: ${{ env.REPO_NAME }}
+
+      - name: Generate cache key
+        shell: bash
+        run: |
+          gcc --version
+
+          gcc --version > CACHE_KEY.txt
+          echo $MANUAL_CACHING >> CACHE_KEY.txt
+          if [ "$AUTO_CACHING" == "true" ]; then
+            thisFile=$REPO_NAME/.github/workflows/linux.yml
+            echo `md5sum $thisFile | cut -c -32` >> CACHE_KEY.txt
+          fi
+          md5cache=$(md5sum CACHE_KEY.txt | cut -c -32)
+          echo "CACHE_KEY=$md5cache" >> $GITHUB_ENV
+
+          mkdir -p Libraries && cd Libraries
+          echo "LibrariesPath=`pwd`" >> $GITHUB_ENV
+
+      - name: Qt cache
+        id: cache-qt
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.LibrariesPath }}/Qt-${{ env.QT_VER }}
+          key: ${{ runner.OS }}-qt-${{ env.CACHE_KEY }}
+
+      - name: Qt build
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        run: |
+          cd $LibrariesPath
+
+          git clone -b v$QT_VER --depth=1 git://code.qt.io/qt/qt5.git qt-sources
+          cd qt_sources
+          perl init-repository --module-subset=qtbase
+          git submodule update qtbase
+
+          ./configure \
+          -prefix "$LibrariesPath\qt-build" \
+          -release \
+          -opensource \
+          -confirm-license \
+          -qt-zlib \
+          -qt-libpng \
+          -qt-libjpeg \
+          -qt-harfbuzz \
+          -qt-pcre \
+          -no-gtk \
+          -no-zstd \
+          -static \
+          -dbus-runtime \
+          -no-openssl \
+          -nomake examples \
+          -nomake tests \
+          -optimize-size
+
+          make -j$(nproc)
+          sudo make INSTALL_ROOT="$LibrariesPath/qt-build" install
