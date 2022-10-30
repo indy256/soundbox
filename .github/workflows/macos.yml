@@ -83,3 +83,16 @@ jobs:
           cmake --build . --parallel $NUMBER_OF_PROCESSORS
           cmake --install .
 
+      - name: SoundBox build
+        run: |
+          cd $REPO_NAME
+
+          cmake -GXcode -DCMAKE_PREFIX_PATH=$LibrariesPath/qt-build
+          xcoderun='xcodebuild build -project soundbox.xcodeproj -scheme soundbox -destination "platform=macOS,arch=x86_64" -configuration Release'
+          bash -c "$xcoderun"
+
+      - uses: actions/upload-artifact@v3
+        name: Upload artifact
+        with:
+          name: soundbox-macos
+          path: ${{ env.REPO_NAME }}/Release
