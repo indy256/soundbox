@@ -88,7 +88,7 @@ jobs:
           git submodule update qtbase
 
           ./configure \
-          -prefix "$LibrariesPath\qt-build" \
+          -prefix "$LibrariesPath/qt-build" \
           -release \
           -opensource \
           -confirm-license \
@@ -108,3 +108,16 @@ jobs:
 
           make -j$(nproc)
           sudo make INSTALL_ROOT="$LibrariesPath/qt-build" install
+
+      - name: SoundBox build
+        run: |
+          cd $REPO_NAME
+
+          cmake -DCMAKE_PREFIX_PATH=$LibrariesPath/qt-build -D CMAKE_CXX_FLAGS="-s"
+          make -j$(nproc)
+
+      - uses: actions/upload-artifact@v3
+        name: Upload artifact
+        with:
+          name: soundbox-linux
+          path: ${{ env.REPO_NAME }}/soundbox
