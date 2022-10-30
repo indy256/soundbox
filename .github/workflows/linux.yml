@@ -48,7 +48,7 @@ jobs:
           sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test -y
 
       - name: Clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
           path: ${{ env.REPO_NAME }}
@@ -83,7 +83,7 @@ jobs:
           cd $LibrariesPath
 
           git clone -b v$QT_VER --depth=1 git://code.qt.io/qt/qt5.git qt-sources
-          cd qt_sources
+          cd qt-sources
           perl init-repository --module-subset=qtbase
           git submodule update qtbase
 
