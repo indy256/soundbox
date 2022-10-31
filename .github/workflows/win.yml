@@ -95,6 +95,23 @@ jobs:
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
           cmake --install .
 
+      - name: OpenAL Soft cache
+        id: cache-openal
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.REPO_NAME }}/submodules/openal-soft/build/Release
+          key: ${{ runner.OS }}-openal-soft-${{ env.CACHE_KEY }}
+      - name: OpenAL Soft build
+        if: steps.cache-openal.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          cd %REPO_NAME%
+          git submodule update --init --recursive
+          cd submodules/openal-soft/build
+          %VC%
+          cmake .. -A Win32 -D LIBTYPE:STRING=STATIC -D FORCE_STATIC_VCRT=ON -D ALSOFT_BACKEND_WASAPI=OFF
+          msbuild -m OpenAL.vcxproj /property:Configuration=Release
+          
       - name: SoundBox build
         shell: cmd
         run: |
