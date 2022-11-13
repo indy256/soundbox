@@ -1,6 +1,7 @@
 // Copyright (C) 2016 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+#include "sound.h"
 #include "window.h"
 
 #include <QApplication>
@@ -54,5 +55,6 @@ int main(int argc, char *argv[])
     Window window;
     window.setSourceModel(createMailModel(&window));
     window.show();
+    playwav();
     return app.exec();
 }
