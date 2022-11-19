@@ -1,3 +1,6 @@
 [submodule "submodules/openal-soft"]
 	path = submodules/openal-soft
 	url = https://github.com/kcat/openal-soft
+[submodule "submodules/FFmpeg"]
+	path = submodules/FFmpeg
+	url = https://github.com/FFmpeg/FFmpeg
