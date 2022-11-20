@@ -33,20 +33,22 @@ ELSEIF (APPLE)
     find_library(AUDIO_TOOLBOX AudioToolbox)
     find_library(CORE_AUDIO CoreAudio)
     find_library(AUDIO_UNIT AudioUnit)
+    find_library(OPENAL openal)
     target_link_libraries(soundbox PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
-        /usr/local/macos/lib/libopenal.a
         ${AUDIO_TOOLBOX}
         ${CORE_AUDIO}
         ${AUDIO_UNIT}
+        ${OPENAL}
     )
 ELSE()
+    find_library(OPENAL openal)
     target_link_libraries(soundbox PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
-        /usr/local/lib/libopenal.a
+        ${OPENAL}
     )
 ENDIF()
