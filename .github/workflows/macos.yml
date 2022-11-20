@@ -16,6 +16,9 @@ jobs:
       QT_VER: "6.4.0"
       MANUAL_CACHING: "1"
       AUTO_CACHING: "false"
+      MACOSX_DEPLOYMENT_TARGET: "11.7"
+      UNGUARDED: "-Werror=unguarded-availability-new"
+      PREFIX: "/usr/local/macos"
     steps:
       - name: Get repository name
         run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
@@ -82,6 +85,24 @@ jobs:
 
           cmake --build . --parallel $NUMBER_OF_PROCESSORS
           cmake --install .
+
+      - name: OpenAL Soft build
+        run: |
+          cd $REPO_NAME
+          git submodule update --init submodules/openal-soft
+          cd submodules/openal-soft/build
+
+          CFLAGS="$UNGUARDED" CPPFLAGS="$UNGUARDED" cmake \
+          -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
+          -D ALSOFT_EXAMPLES=OFF \
+          -D LIBTYPE:STRING=STATIC -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+          -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=$MACOSX_DEPLOYMENT_TARGET ..
+
+          make -j$(nproc)
+          sudo make install
+
+          cat /usr/local/macos/lib/pkgconfig/openal.pc
+          cat /usr/local/macos/lib/cmake/OpenAL/OpenALConfig.cmake
 
       - name: SoundBox build
         run: |

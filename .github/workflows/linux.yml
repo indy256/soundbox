@@ -77,23 +77,6 @@ jobs:
           path: ${{ env.LibrariesPath }}/qt-build
           key: ${{ runner.OS }}-qt-${{ env.CACHE_KEY }}
 
-      - name: OpenAL Soft build
-        run: |
-          cd $REPO_NAME
-          git submodule update --init submodules/openal-soft
-          cd submodules/openal-soft/build
-
-          cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DLIBTYPE:STRING=STATIC \
-          -DALSOFT_EXAMPLES=OFF \
-          -DALSOFT_TESTS=OFF \
-          -DALSOFT_UTILS=OFF \
-          -DALSOFT_CONFIG=OFF
-
-          make -j$(nproc)
-          sudo make install
-          
       - name: Qt build
         if: steps.cache-qt.outputs.cache-hit != 'true'
         run: |
@@ -126,6 +109,23 @@ jobs:
           make -j$(nproc)
           sudo make INSTALL_ROOT="$LibrariesPath/qt-build" install
 
+      - name: OpenAL Soft build
+        run: |
+          cd $REPO_NAME
+          git submodule update --init submodules/openal-soft
+          cd submodules/openal-soft/build
+
+          cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DLIBTYPE:STRING=STATIC \
+          -DALSOFT_EXAMPLES=OFF \
+          -DALSOFT_TESTS=OFF \
+          -DALSOFT_UTILS=OFF \
+          -DALSOFT_CONFIG=OFF
+
+          make -j$(nproc)
+          sudo make install
+          
       - name: SoundBox build
         run: |
           cd $REPO_NAME
