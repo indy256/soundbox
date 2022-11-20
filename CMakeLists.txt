@@ -31,4 +31,10 @@ IF (WIN32)
     )
 ELSEIF (APPLE)
 ELSE()
+    target_link_libraries(soundbox PUBLIC
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        /usr/local/lib/libopenal.a
+    )
 ENDIF()

@@ -16,7 +16,6 @@ jobs:
     env:
       VC: "call vcvars32.bat && cd Libraries"
       QT_VER: "6.4.0"
-      MANUAL_CACHING: "2"
       AUTO_CACHING: "false"
     steps:
       - name: Get repository name
@@ -47,7 +46,6 @@ jobs:
       - name: Generate cache key
         shell: bash
         run: |
-          echo $MANUAL_CACHING >> CACHE_KEY.txt
           if [ "$AUTO_CACHING" == "true" ]; then
             thisFile=$REPO_NAME/.github/workflows/win.yml
             echo `md5sum $thisFile | awk '{ print $1 }'` >> CACHE_KEY.txt
@@ -129,7 +127,6 @@ jobs:
           %VC%
           set CHERE_INVOKING=enabled_from_arguments
           set MSYS2_PATH_TYPE=inherit
-          dir
           call c:\tools\msys64\usr\bin\bash --login ../scripts/build_ffmpeg_win.sh
 
       - name: SoundBox build
