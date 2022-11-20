@@ -16,7 +16,6 @@ jobs:
     env:
       GIT: "https://github.com"
       QT_VER: "6.4.0"
-      MANUAL_CACHING: "1"
       AUTO_CACHING: "false"
     steps:
       - name: Get repository name
@@ -59,7 +58,6 @@ jobs:
           gcc --version
 
           gcc --version > CACHE_KEY.txt
-          echo $MANUAL_CACHING >> CACHE_KEY.txt
           if [ "$AUTO_CACHING" == "true" ]; then
             thisFile=$REPO_NAME/.github/workflows/linux.yml
             echo `md5sum $thisFile | cut -c -32` >> CACHE_KEY.txt

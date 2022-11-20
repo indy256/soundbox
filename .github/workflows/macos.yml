@@ -14,7 +14,6 @@ jobs:
     runs-on: macos-latest
     env:
       QT_VER: "6.4.0"
-      MANUAL_CACHING: "1"
       AUTO_CACHING: "false"
       MACOSX_DEPLOYMENT_TARGET: "11.7"
       UNGUARDED: "-Werror=unguarded-availability-new"
@@ -46,7 +45,6 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
           xcodebuild -version > CACHE_KEY.txt
-          echo $MANUAL_CACHING >> CACHE_KEY.txt
           if [ "$AUTO_CACHING" == "true" ]; then
             thisFile=$REPO_NAME/.github/workflows/macos.yml
             echo `md5 -q $thisFile` >> CACHE_KEY.txt
