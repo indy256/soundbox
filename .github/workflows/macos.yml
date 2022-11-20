@@ -99,9 +99,6 @@ jobs:
           make -j$(nproc)
           sudo make install
 
-          cat /usr/local/macos/lib/pkgconfig/openal.pc
-          cat /usr/local/macos/lib/cmake/OpenAL/OpenALConfig.cmake
-
       - name: SoundBox build
         run: |
           cd $REPO_NAME
