@@ -27,7 +27,7 @@ IF (WIN32)
         Qt::Gui
         Qt::Widgets
         winmm.lib
-        ${CMAKE_SOURCE_DIR}/submodules/openal-soft/build/Release/OpenAL32.lib
+        ${CMAKE_SOURCE_DIR}/submodules/openal-soft/build/Debug/OpenAL32.lib
     )
 ELSEIF (APPLE)
     find_library(AUDIO_TOOLBOX AudioToolbox)
