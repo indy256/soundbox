@@ -11,6 +11,11 @@
 #include <cstring>
 #include <QThread>
 
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+}
+
 bool isBigEndian()
 {
     int a = 1;
@@ -62,6 +67,12 @@ char* loadWAV(const char* fn, int& chan, int& samplerate, int& bps, int& size)
 
 int playwav()
 {
+    const char *url = "file:2.mp3";
+    AVFormatContext *fc = NULL;
+    int ret = avformat_open_input(&fc, url, NULL, NULL);
+    if (ret < 0)
+        return 0;
+
     int channel, sampleRate, bps, size;
     char* data = loadWAV("notify.wav", channel, sampleRate, bps, size);
     if (!data) {
