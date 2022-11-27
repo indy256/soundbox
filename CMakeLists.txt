@@ -20,6 +20,7 @@ set_target_properties(soundbox PROPERTIES
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/submodules/openal-soft/include)
+include_directories(${CMAKE_SOURCE_DIR}/submodules/FFmpeg)
 
 IF (WIN32)
     target_link_libraries(soundbox PUBLIC
@@ -27,7 +28,11 @@ IF (WIN32)
         Qt::Gui
         Qt::Widgets
         winmm.lib
+        bcrypt.lib
         ${CMAKE_SOURCE_DIR}/submodules/openal-soft/build/Debug/OpenAL32.lib
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavcodec/libavcodec.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavformat/libavformat.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavutil/libavutil.a
     )
 ELSEIF (APPLE)
     find_library(AUDIO_TOOLBOX AudioToolbox)
