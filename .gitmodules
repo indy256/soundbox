@@ -4,3 +4,6 @@
 [submodule "submodules/FFmpeg"]
 	path = submodules/FFmpeg
 	url = https://github.com/FFmpeg/FFmpeg
+[submodule "submodules/openssl"]
+	path = submodules/openssl
+	url = https://github.com/openssl/openssl
