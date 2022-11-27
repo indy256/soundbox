@@ -14,7 +14,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     env:
-      VC: "call vcvars32.bat && cd Libraries"
+      VC: "call vcvars64.bat && cd Libraries"
       QT_VER: "6.4.0"
       AUTO_CACHING: "false"
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Save msbuild version
         shell: cmd
         run: |
-          call vcvars32.bat
+          call vcvars64.bat
           msbuild -version > CACHE_KEY.txt
 
       - name: Generate cache key
@@ -70,18 +70,20 @@ jobs:
           git submodule update qtbase
           configure ^
           -prefix "%LibrariesPath%\qt-build" ^
-          -release ^
+          -debug ^
           -opensource ^
           -confirm-license ^
           -static ^
           -static-runtime ^
+          -qt-zlib ^
+          -qt-libpng ^
+          -qt-libjpeg ^
           -no-opengl ^
           -mp ^
           -skip webengine ^
           -nomake tools ^
           -nomake examples ^
           -nomake tests ^
-          -optimize-size ^
           -platform win32-msvc
 
       - name: Qt build
@@ -107,8 +109,8 @@ jobs:
           git submodule update --init submodules/openal-soft
           cd submodules/openal-soft/build
           %VC%
-          cmake .. -A Win32 -D LIBTYPE:STRING=STATIC -D FORCE_STATIC_VCRT=ON -D ALSOFT_BACKEND_WASAPI=OFF
-          msbuild -m OpenAL.vcxproj /property:Configuration=Release
+          cmake .. -A x64 -D LIBTYPE:STRING=STATIC -D FORCE_STATIC_VCRT=ON -D ALSOFT_BACKEND_WASAPI=OFF
+          msbuild -m OpenAL.vcxproj /property:Configuration=Debug
           
       - name: FFmpeg cache
         id: cache-ffmpeg
@@ -133,12 +135,12 @@ jobs:
         shell: cmd
         run: |
           cd %REPO_NAME%
-          cmake -A Win32 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
-          call vcvars32.bat
-          msbuild -m soundbox.sln /nologo /p:Configuration=Release,Platform=Win32
+          cmake -A x64 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
+          call vcvars64.bat
+          msbuild -m soundbox.sln /nologo /p:Configuration=Debug
 
       - uses: actions/upload-artifact@v3
         name: Upload artifact
         with:
           name: soundbox-windows
-          path: ${{ env.REPO_NAME }}\Release\soundbox.exe
+          path: ${{ env.REPO_NAME }}\Debug\soundbox.exe
