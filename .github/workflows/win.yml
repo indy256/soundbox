@@ -95,23 +95,6 @@ jobs:
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
           cmake --install .
 
-      - name: OpenAL Soft cache
-        id: cache-openal
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.REPO_NAME }}/submodules/openal-soft
-          key: ${{ runner.OS }}-openal-${{ env.CACHE_KEY }}
-      - name: OpenAL Soft build
-        if: steps.cache-openal.outputs.cache-hit != 'true'
-        shell: cmd
-        run: |
-          cd %REPO_NAME%
-          git submodule update --init submodules/openal-soft
-          cd submodules/openal-soft/build
-          %VC%
-          cmake .. -A x64 -D LIBTYPE:STRING=STATIC -D FORCE_STATIC_VCRT=ON -D ALSOFT_BACKEND_WASAPI=OFF
-          msbuild -m OpenAL.vcxproj /property:Configuration=Debug
-          
       - name: FFmpeg cache
         id: cache-ffmpeg
         uses: actions/cache@v3

@@ -84,21 +84,6 @@ jobs:
           cmake --build . --parallel $NUMBER_OF_PROCESSORS
           cmake --install .
 
-      - name: OpenAL Soft build
-        run: |
-          cd $REPO_NAME
-          git submodule update --init submodules/openal-soft
-          cd submodules/openal-soft/build
-
-          CFLAGS="$UNGUARDED" CPPFLAGS="$UNGUARDED" cmake \
-          -D CMAKE_INSTALL_PREFIX:PATH=$PREFIX \
-          -D ALSOFT_EXAMPLES=OFF \
-          -D LIBTYPE:STRING=STATIC -DCMAKE_OSX_ARCHITECTURES=x86_64 \
-          -D CMAKE_OSX_DEPLOYMENT_TARGET:STRING=$MACOSX_DEPLOYMENT_TARGET ..
-
-          make -j$(nproc)
-          sudo make install
-
       - name: SoundBox build
         run: |
           cd $REPO_NAME

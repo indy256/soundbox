@@ -1,6 +1,3 @@
-// Copyright (C) 2016 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
-
 #ifndef WINDOW_H
 #define WINDOW_H
 
@@ -15,6 +12,8 @@ class QLabel;
 class QLineEdit;
 class QSortFilterProxyModel;
 class QTreeView;
+class QPushButton;
+class QSlider;
 QT_END_NAMESPACE
 
 class Window : public QWidget
@@ -25,33 +24,17 @@ public:
     Window();
 
     void setSourceModel(QAbstractItemModel *model);
+    void resizeColumnToContents();
 
 private slots:
-    void filterRegularExpressionChanged();
-    void filterColumnChanged();
-    void sortChanged();
+    void openFile();
+    void doubleClicked();
 
 private:
-    QSortFilterProxyModel *proxyModel;
-
     QGroupBox *sourceGroupBox;
-    QGroupBox *proxyGroupBox;
     QTreeView *sourceView;
-    QTreeView *proxyView;
-    QCheckBox *filterCaseSensitivityCheckBox;
-    QCheckBox *sortCaseSensitivityCheckBox;
-    QLabel *filterPatternLabel;
-    QLabel *filterSyntaxLabel;
-    QLabel *filterColumnLabel;
-    QLineEdit *filterPatternLineEdit;
-    enum Syntax {
-        RegularExpression,
-        Wildcard,
-        FixedString
-    };
-
-    QComboBox *filterSyntaxComboBox;
-    QComboBox *filterColumnComboBox;
+    QPushButton *openButton;
+    QSlider *positionSlider;
 };
 
 #endif // WINDOW_H
