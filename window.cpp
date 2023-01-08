@@ -1,9 +1,8 @@
-// Copyright (C) 2016 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
-
 #include <QtWidgets>
 
 #include "window.h"
+#include "sdl.h"
+#include <string.h>
 
 static inline QColor textColor(const QPalette &palette)
 {
@@ -21,133 +20,80 @@ static void setTextColor(QWidget *w, const QColor &c)
 
 Window::Window()
 {
-    proxyModel = new QSortFilterProxyModel;
-
     sourceView = new QTreeView;
     sourceView->setRootIsDecorated(false);
+    sourceView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     sourceView->setAlternatingRowColors(true);
+    sourceView->setSortingEnabled(true);
 
-    proxyView = new QTreeView;
-    proxyView->setRootIsDecorated(false);
-    proxyView->setAlternatingRowColors(true);
-    proxyView->setModel(proxyModel);
-    proxyView->setSortingEnabled(true);
+    positionSlider = new QSlider(Qt::Horizontal, this);
 
-    sortCaseSensitivityCheckBox = new QCheckBox(tr("Case sensitive sorting"));
-    filterCaseSensitivityCheckBox = new QCheckBox(tr("Case sensitive filter"));
+    openButton = new QPushButton("Open file", this);
 
-    filterPatternLineEdit = new QLineEdit;
-    filterPatternLineEdit->setClearButtonEnabled(true);
-    filterPatternLabel = new QLabel(tr("&Filter pattern:"));
-    filterPatternLabel->setBuddy(filterPatternLineEdit);
+    connect(sourceView, &QTreeView::doubleClicked,
+            this, &Window::doubleClicked);
 
-    filterSyntaxComboBox = new QComboBox;
-    filterSyntaxComboBox->addItem(tr("Regular expression"), RegularExpression);
-    filterSyntaxComboBox->addItem(tr("Wildcard"), Wildcard);
-    filterSyntaxComboBox->addItem(tr("Fixed string"), FixedString);
-    filterSyntaxLabel = new QLabel(tr("Filter &syntax:"));
-    filterSyntaxLabel->setBuddy(filterSyntaxComboBox);
+    connect(openButton, &QPushButton::clicked,
+            this, &Window::openFile);
 
-    filterColumnComboBox = new QComboBox;
-    filterColumnComboBox->addItem(tr("Subject"));
-    filterColumnComboBox->addItem(tr("Sender"));
-    filterColumnComboBox->addItem(tr("Date"));
-    filterColumnLabel = new QLabel(tr("Filter &column:"));
-    filterColumnLabel->setBuddy(filterColumnComboBox);
+    sourceGroupBox = new QGroupBox(tr("File list"));
 
-    connect(filterPatternLineEdit, &QLineEdit::textChanged,
-            this, &Window::filterRegularExpressionChanged);
-    connect(filterSyntaxComboBox, &QComboBox::currentIndexChanged,
-            this, &Window::filterRegularExpressionChanged);
-    connect(filterColumnComboBox, &QComboBox::currentIndexChanged,
-            this, &Window::filterColumnChanged);
-    connect(filterCaseSensitivityCheckBox, &QAbstractButton::toggled,
-            this, &Window::filterRegularExpressionChanged);
-    connect(sortCaseSensitivityCheckBox, &QAbstractButton::toggled,
-            this, &Window::sortChanged);
-
-    sourceGroupBox = new QGroupBox(tr("Original Model"));
-    proxyGroupBox = new QGroupBox(tr("Sorted/Filtered Model"));
-
-    QHBoxLayout *sourceLayout = new QHBoxLayout;
+    QVBoxLayout *sourceLayout = new QVBoxLayout;
     sourceLayout->addWidget(sourceView);
+    sourceLayout->addWidget(positionSlider);
+    sourceLayout->addWidget(openButton);
     sourceGroupBox->setLayout(sourceLayout);
-
-    QGridLayout *proxyLayout = new QGridLayout;
-    proxyLayout->addWidget(proxyView, 0, 0, 1, 3);
-    proxyLayout->addWidget(filterPatternLabel, 1, 0);
-    proxyLayout->addWidget(filterPatternLineEdit, 1, 1, 1, 2);
-    proxyLayout->addWidget(filterSyntaxLabel, 2, 0);
-    proxyLayout->addWidget(filterSyntaxComboBox, 2, 1, 1, 2);
-    proxyLayout->addWidget(filterColumnLabel, 3, 0);
-    proxyLayout->addWidget(filterColumnComboBox, 3, 1, 1, 2);
-    proxyLayout->addWidget(filterCaseSensitivityCheckBox, 4, 0, 1, 2);
-    proxyLayout->addWidget(sortCaseSensitivityCheckBox, 4, 2);
-    proxyGroupBox->setLayout(proxyLayout);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
     mainLayout->addWidget(sourceGroupBox);
-    mainLayout->addWidget(proxyGroupBox);
 
     setLayout(mainLayout);
 
-    setWindowTitle(tr("Basic Sort/Filter Model"));
-    resize(500, 450);
+    setWindowTitle(tr("SoundBox"));
+    resize(800, 300);
 
-    proxyView->sortByColumn(1, Qt::AscendingOrder);
-    filterColumnComboBox->setCurrentIndex(1);
-
-    filterPatternLineEdit->setText("Andy|Grace");
-    filterCaseSensitivityCheckBox->setChecked(true);
-    sortCaseSensitivityCheckBox->setChecked(true);
+    init_audio();
 }
 
 void Window::setSourceModel(QAbstractItemModel *model)
 {
-    proxyModel->setSourceModel(model);
     sourceView->setModel(model);
 }
 
-void Window::filterRegularExpressionChanged()
+void Window::openFile()
 {
-    Syntax s = Syntax(filterSyntaxComboBox->itemData(filterSyntaxComboBox->currentIndex()).toInt());
-    QString pattern = filterPatternLineEdit->text();
-    switch (s) {
-    case Wildcard:
-        pattern = QRegularExpression::wildcardToRegularExpression(pattern);
-        break;
-    case FixedString:
-        pattern = QRegularExpression::escape(pattern);
-        break;
-    default:
-        break;
-    }
-
-    QRegularExpression::PatternOptions options = QRegularExpression::NoPatternOption;
-    if (!filterCaseSensitivityCheckBox->isChecked())
-        options |= QRegularExpression::CaseInsensitiveOption;
-    QRegularExpression regularExpression(pattern, options);
-
-    if (regularExpression.isValid()) {
-        filterPatternLineEdit->setToolTip(QString());
-        proxyModel->setFilterRegularExpression(regularExpression);
-        setTextColor(filterPatternLineEdit, textColor(style()->standardPalette()));
-    } else {
-        filterPatternLineEdit->setToolTip(regularExpression.errorString());
-        proxyModel->setFilterRegularExpression(QRegularExpression());
-        setTextColor(filterPatternLineEdit, Qt::red);
+    QFileDialog fileDialog(this);
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.setWindowTitle(tr("Open audio"));
+    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
+    if (fileDialog.exec() == QDialog::Accepted) {
+        QStringList files = fileDialog.selectedFiles();
+        for (const auto& f: files)
+        {
+            QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+            model->insertRow(model->rowCount());
+            model->setData(model->index(model->rowCount() - 1, 0), f);
+        }
     }
 }
 
-void Window::filterColumnChanged()
+void Window::doubleClicked()
 {
-    proxyModel->setFilterKeyColumn(filterColumnComboBox->currentIndex());
+    QItemSelectionModel *selectionModel  = (QItemSelectionModel  *) sourceView->selectionModel();
+    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+    QModelIndexList selected = selectionModel->selection().indexes();
+    int row = selected[0].row();
+    QString filename = model->data(model->index(row, 0)).toString();
+    QByteArray ba = filename.toUtf8();
+    const char *name = ba.data();
+    ::filename = new char[2000];
+    strcpy(::filename, name);
+    ::new_file = true;
 }
 
-void Window::sortChanged()
+void Window::resizeColumnToContents()
 {
-    proxyModel->setSortCaseSensitivity(
-            sortCaseSensitivityCheckBox->isChecked() ? Qt::CaseSensitive
-                                                     : Qt::CaseInsensitive);
+    sourceView->setColumnWidth(0, 350);
 }
+

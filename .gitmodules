@@ -1,6 +1,6 @@
-[submodule "submodules/openal-soft"]
-	path = submodules/openal-soft
-	url = https://github.com/kcat/openal-soft
 [submodule "submodules/FFmpeg"]
 	path = submodules/FFmpeg
 	url = https://github.com/FFmpeg/FFmpeg
+[submodule "submodules/SDL"]
+	path = submodules/SDL
+	url = https://github.com/libsdl-org/SDL

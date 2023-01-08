@@ -6,10 +6,10 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
 add_definitions(-DAL_LIBTYPE_STATIC)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 qt_add_executable(soundbox
-    sound.h
+    sdl.h
     main.cpp
     window.cpp window.h
 )
@@ -21,6 +21,7 @@ set_target_properties(soundbox PROPERTIES
 
 include_directories(${CMAKE_SOURCE_DIR}/submodules/openal-soft/include)
 include_directories(${CMAKE_SOURCE_DIR}/submodules/FFmpeg)
+include_directories(${CMAKE_SOURCE_DIR}/submodules/SDL/include)
 
 IF (WIN32)
     target_link_libraries(soundbox PUBLIC
@@ -29,10 +30,15 @@ IF (WIN32)
         Qt::Widgets
         winmm.lib
         bcrypt.lib
+        imm32.lib
+        Setupapi.lib
+        Version.lib
         ${CMAKE_SOURCE_DIR}/submodules/openal-soft/build/Debug/OpenAL32.lib
-        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavcodec/libavcodec.a
-        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavformat/libavformat.a
-        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavutil/libavutil.a
+        D:/projects/playsound/submodules/SDL/SDL-build/Release/SDL3-static.lib
+        D:/projects/playsound/submodules/FFmpeg/libavcodec/libavcodec.a
+        D:/projects/playsound/submodules/FFmpeg/libavformat/libavformat.a
+        D:/projects/playsound/submodules/FFmpeg/libavutil/libavutil.a
+        D:/projects/playsound/submodules/FFmpeg/libswresample/libswresample.a
     )
 ELSEIF (APPLE)
     find_library(AUDIO_TOOLBOX AudioToolbox)
