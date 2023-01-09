@@ -95,6 +95,26 @@ jobs:
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
           cmake --install .
 
+      - name: SDL cache
+        id: cache-sdl
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.REPO_NAME }}/submodules/SDL
+          key: ${{ runner.OS }}-sdl-${{ env.CACHE_KEY }}
+      - name: SDL build
+        if: steps.cache-sdl.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          cd %REPO_NAME%
+          git submodule update --init submodules\SDL
+          cd %LibrariesPath%
+          mkdir SDL-build
+          cd SDL-build
+          cmake -S %GITHUB_WORKSPACE%\%REPO_NAME%\submodules\SDL -B . -A x64 -DSDL_FORCE_STATIC_VCRT=ON
+          cmake --build . --config Release --parallel
+          cd ..
+          move SDL-build %GITHUB_WORKSPACE%\%REPO_NAME%\submodules\SDL
+          
       - name: FFmpeg cache
         id: cache-ffmpeg
         uses: actions/cache@v3

@@ -19,7 +19,6 @@ set_target_properties(soundbox PROPERTIES
     MACOSX_BUNDLE TRUE
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/submodules/openal-soft/include)
 include_directories(${CMAKE_SOURCE_DIR}/submodules/FFmpeg)
 include_directories(${CMAKE_SOURCE_DIR}/submodules/SDL/include)
 
@@ -33,33 +32,74 @@ IF (WIN32)
         imm32.lib
         Setupapi.lib
         Version.lib
-        ${CMAKE_SOURCE_DIR}/submodules/openal-soft/build/Debug/OpenAL32.lib
-        D:/projects/playsound/submodules/SDL/SDL-build/Release/SDL3-static.lib
-        D:/projects/playsound/submodules/FFmpeg/libavcodec/libavcodec.a
-        D:/projects/playsound/submodules/FFmpeg/libavformat/libavformat.a
-        D:/projects/playsound/submodules/FFmpeg/libavutil/libavutil.a
-        D:/projects/playsound/submodules/FFmpeg/libswresample/libswresample.a
+        ${CMAKE_SOURCE_DIR}/submodules/SDL/SDL-build/Release/SDL3-static.lib
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavcodec/libavcodec.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavformat/libavformat.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavutil/libavutil.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libswresample/libswresample.a
     )
 ELSEIF (APPLE)
     find_library(AUDIO_TOOLBOX AudioToolbox)
     find_library(CORE_AUDIO CoreAudio)
     find_library(AUDIO_UNIT AudioUnit)
-    find_library(OPENAL openal)
+    find_library(CORE_FOUNDATION CoreFoundation)
+    find_library(VIDEO_TOOLBOX VideoToolbox)
+    find_library(CORE_GRAPHICS CoreGraphics)
+    find_library(CORE_MEDIA CoreMedia)
+    find_library(CORE_VIDEO CoreVideo)
+    find_library(FORCE_FEEDBACK ForceFeedback)
+    find_library(GAME_CONTROLLER GameController)
+    find_library(IO_KIT IOKit)
+    find_library(CORE_HAPTICS CoreHaptics)        
+    find_library(CORE_SERVICES CoreServices)
+    find_library(METAL Metal)
+    find_library(QUARTZ_CORE QuartzCore)
+    find_library(APP_KIT AppKit)
+    find_library(CARBON Carbon)
+    
+    find_library(ICONV NAMES iconv libiconv)
+    find_library(ZLIB NAMES z libz zlib libzlib HINTS "/usr/local/macos/lib")
+    
     target_link_libraries(soundbox PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
+
         ${AUDIO_TOOLBOX}
         ${CORE_AUDIO}
         ${AUDIO_UNIT}
-        ${OPENAL}
+        ${CORE_FOUNDATION}
+        ${VIDEO_TOOLBOX}
+        ${CORE_GRAPHICS}
+        ${CORE_MEDIA}
+        ${CORE_VIDEO}
+        ${FORCE_FEEDBACK}
+        ${GAME_CONTROLLER}
+        ${IO_KIT}
+        ${CORE_HAPTICS}
+        ${CORE_SERVICES}
+        ${METAL}
+        ${QUARTZ_CORE}
+        ${APP_KIT}
+        ${CARBON}
+        ${ICONV}
+        ${ZLIB}
+        ${CMAKE_SOURCE_DIR}/submodules/SDL/build/libSDL3.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavformat/libavformat.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavcodec/libavcodec.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavutil/libavutil.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libswresample/libswresample.a
     )
 ELSE()
-    find_library(OPENAL openal)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-as-needed -lpthread -ldl -lX11 -lvdpau -lva -lva-drm")
     target_link_libraries(soundbox PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
-        ${OPENAL}
+        ${CMAKE_SOURCE_DIR}/submodules/SDL/build/libSDL3.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavformat/libavformat.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavcodec/libavcodec.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libavutil/libavutil.a
+        ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libswresample/libswresample.a
     )
 ENDIF()
