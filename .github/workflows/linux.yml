@@ -14,9 +14,7 @@ jobs:
     name: Ubuntu
     runs-on: ubuntu-20.04
     env:
-      GIT: "https://github.com"
       QT_VER: "6.4.0"
-      AUTO_CACHING: "false"
     steps:
       - name: Get repository name
         run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
@@ -58,10 +56,6 @@ jobs:
           gcc --version
 
           gcc --version > CACHE_KEY.txt
-          if [ "$AUTO_CACHING" == "true" ]; then
-            thisFile=$REPO_NAME/.github/workflows/linux.yml
-            echo `md5sum $thisFile | cut -c -32` >> CACHE_KEY.txt
-          fi
           md5cache=$(md5sum CACHE_KEY.txt | cut -c -32)
           echo "CACHE_KEY=$md5cache" >> $GITHUB_ENV
 
