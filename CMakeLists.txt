@@ -9,9 +9,9 @@ add_definitions(-DAL_LIBTYPE_STATIC)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 qt_add_executable(soundbox
-    sdl.h
-    main.cpp
-    window.cpp window.h
+    src/sdl.h
+    src/main.cpp
+    src/window.cpp src/window.h
 )
 
 set_target_properties(soundbox PROPERTIES
@@ -56,15 +56,13 @@ ELSEIF (APPLE)
     find_library(QUARTZ_CORE QuartzCore)
     find_library(APP_KIT AppKit)
     find_library(CARBON Carbon)
-    
-    find_library(ICONV NAMES iconv libiconv)
-    find_library(ZLIB NAMES z libz zlib libzlib HINTS "/usr/local/macos/lib")
-    
+    find_library(ICONV NAMES iconv)
+    find_library(ZLIB NAMES z)
+
     target_link_libraries(soundbox PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
-
         ${AUDIO_TOOLBOX}
         ${CORE_AUDIO}
         ${AUDIO_UNIT}

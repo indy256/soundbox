@@ -15,7 +15,6 @@ jobs:
     env:
       QT_VER: "6.4.0"
       AUTO_CACHING: "false"
-      MACOSX_DEPLOYMENT_TARGET: "11.7"
       UNGUARDED: "-Werror=unguarded-availability-new"
       PREFIX: "/usr/local/macos"
     steps:
@@ -117,9 +116,8 @@ jobs:
           LDFLAGS=`freetype-config --libs`
           PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/X11/lib/pkgconfig
           ./configure \
-          --extra-cflags="$MIN_MAC $UNGUARDED" \
-          --extra-cxxflags="$MIN_MAC $UNGUARDED" \
-          --extra-ldflags="$MIN_MAC" \
+          --extra-cflags="$UNGUARDED" \
+          --extra-cxxflags="$UNGUARDED" \
           --enable-protocol=file \
           --disable-programs \
           --disable-doc \
