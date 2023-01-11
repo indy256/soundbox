@@ -129,18 +129,17 @@ jobs:
           cd %REPO_NAME%
           git submodule update --init submodules/FFmpeg
           cd submodules/FFmpeg
-          %VC%
+          call vcvars64.bat
           set CHERE_INVOKING=enabled_from_arguments
           set MSYS2_PATH_TYPE=inherit
-          call c:\tools\msys64\usr\bin\bash --login ../scripts/build_ffmpeg_win.sh
+          call c:\tools\msys64\usr\bin\bash --login ..\scripts\build_ffmpeg_win.sh
 
       - name: SoundBox build
         shell: cmd
         run: |
           cd %REPO_NAME%
           cmake -A x64 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
-          call vcvars64.bat
-          msbuild -m soundbox.sln /nologo /p:Configuration=Debug
+          msbuild -m soundbox.sln /nologo /p:Configuration=Release
 
       - uses: actions/upload-artifact@v3
         name: Upload artifact
