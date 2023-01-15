@@ -14,9 +14,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     env:
-      VC: "call vcvars64.bat && cd Libraries"
       QT_VER: "6.4.0"
-      AUTO_CACHING: "false"
     steps:
       - name: Get repository name
         shell: bash
@@ -26,6 +24,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: ${{ env.REPO_NAME }}
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          msbuild-architecture: x64
 
       - name: Set up environment variables
         shell: bash
@@ -40,16 +43,11 @@ jobs:
       - name: Save msbuild version
         shell: cmd
         run: |
-          call vcvars64.bat
           msbuild -version > CACHE_KEY.txt
 
       - name: Generate cache key
         shell: bash
         run: |
-          if [ "$AUTO_CACHING" == "true" ]; then
-            thisFile=$REPO_NAME/.github/workflows/win.yml
-            echo `md5sum $thisFile | awk '{ print $1 }'` >> CACHE_KEY.txt
-          fi
           echo "CACHE_KEY=`md5sum CACHE_KEY.txt | awk '{ print $1 }'`" >> $GITHUB_ENV
 
       - name: Qt cache
@@ -63,14 +61,14 @@ jobs:
         if: steps.cache-qt.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          %VC%
+          cd Libraries
           git clone -b v%QT_VER% --depth=1 git://code.qt.io/qt/qt5.git qt-sources
           cd qt-sources
           perl init-repository --module-subset=qtbase
           git submodule update qtbase
           configure ^
           -prefix "%LibrariesPath%\qt-build" ^
-          -debug ^
+          -release ^
           -opensource ^
           -confirm-license ^
           -static ^
@@ -90,7 +88,7 @@ jobs:
         if: steps.cache-qt.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          %VC%
+          cd Libraries
           cd qt-sources
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
           cmake --install .
@@ -129,21 +127,20 @@ jobs:
           cd %REPO_NAME%
           git submodule update --init submodules/FFmpeg
           cd submodules/FFmpeg
-          %VC%
+          cd Libraries
           set CHERE_INVOKING=enabled_from_arguments
           set MSYS2_PATH_TYPE=inherit
-          call c:\tools\msys64\usr\bin\bash --login ../scripts/build_ffmpeg_win.sh
+          call c:\tools\msys64\usr\bin\bash --login ..\scripts\build_ffmpeg_win.sh
 
       - name: SoundBox build
         shell: cmd
         run: |
           cd %REPO_NAME%
-          cmake -A x64 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
-          call vcvars64.bat
-          msbuild -m soundbox.sln /nologo /p:Configuration=Debug
+          cmake -S . -B . -A x64 -DCMAKE_PREFIX_PATH=%LibrariesPath%\qt-build
+          msbuild -m soundbox.sln /nologo /p:Configuration=Release
 
       - uses: actions/upload-artifact@v3
         name: Upload artifact
         with:
           name: soundbox-windows
-          path: ${{ env.REPO_NAME }}\Debug\soundbox.exe
+          path: ${{ env.REPO_NAME }}\Release\soundbox.exe
