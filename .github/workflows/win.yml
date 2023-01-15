@@ -61,6 +61,7 @@ jobs:
         if: steps.cache-qt.outputs.cache-hit != 'true'
         shell: cmd
         run: |
+          call vcvars64.bat
           cd Libraries
           git clone -b v%QT_VER% --depth=1 git://code.qt.io/qt/qt5.git qt-sources
           cd qt-sources
@@ -88,6 +89,7 @@ jobs:
         if: steps.cache-qt.outputs.cache-hit != 'true'
         shell: cmd
         run: |
+          call vcvars64.bat
           cd Libraries
           cd qt-sources
           cmake --build . --parallel %NUMBER_OF_PROCESSORS%
