@@ -14,7 +14,7 @@ jobs:
     name: Ubuntu
     runs-on: ubuntu-20.04
     env:
-      QT_VER: "6.4.0"
+      QT_VER: "6.4.2"
     steps:
       - name: Get repository name
         run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
@@ -61,6 +61,35 @@ jobs:
 
           mkdir -p Libraries && cd Libraries
           echo "LibrariesPath=`pwd`" >> $GITHUB_ENV
+
+      - name: Libwayland.
+        run: |
+          cd $LibrariesPath
+          git clone -b 1.18.0 https://gitlab.freedesktop.org/wayland/wayland
+          cd wayland
+          ./autogen.sh \
+          --enable-static \
+          --disable-documentation \
+          --disable-dtd-validation
+          make -j$(nproc)
+          sudo make install
+          cd ..
+          rm -rf wayland
+          
+      - name: Libxkbcommon
+        run: |
+          cd $LibrariesPath
+          git clone -b xkbcommon-0.8.4 --depth=1 https://github.com/xkbcommon/libxkbcommon.git
+          cd libxkbcommon
+          ./autogen.sh \
+          --disable-docs \
+          --disable-wayland \
+          --with-xkb-config-root=/usr/share/X11/xkb \
+          --with-x-locale-root=/usr/share/X11/locale
+          make -j$(nproc)
+          sudo make install
+          cd ..
+          rm -rf libxkbcommon
 
       - name: Qt cache
         id: cache-qt
