@@ -1,21 +1,19 @@
+#include <QStandardItemModel>
 #include <QtWidgets>
 
 #include "window.h"
 #include "sdl.h"
 #include <string.h>
 
-static inline QColor textColor(const QPalette &palette)
+QAbstractItemModel *createAudioFileModel(QObject *parent)
 {
-    return palette.color(QPalette::Active, QPalette::Text);
-}
+    QStandardItemModel *model = new QStandardItemModel(0, 3, parent);
 
-static void setTextColor(QWidget *w, const QColor &c)
-{
-    auto palette = w->palette();
-    if (textColor(palette) != c) {
-        palette.setColor(QPalette::Active, QPalette::Text, c);
-        w->setPalette(palette);
-    }
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("File"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Duration"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Date"));
+
+    return model;
 }
 
 Window::Window()
@@ -25,6 +23,7 @@ Window::Window()
     sourceView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     sourceView->setAlternatingRowColors(true);
     sourceView->setSortingEnabled(true);
+    sourceView->setModel(createAudioFileModel(this));
 
     positionSlider = new QSlider(Qt::Horizontal, this);
 
@@ -33,32 +32,47 @@ Window::Window()
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
 
+    connect(positionSlider, &QSlider::valueChanged,
+            this, &Window::seek);
+
+    connect(this, &Window::requestSliderUpdate,
+            this, &Window::updateSlider);
+
     connect(openButton, &QPushButton::clicked,
             this, &Window::openFile);
-
-    sourceGroupBox = new QGroupBox(tr("File list"));
 
     QVBoxLayout *sourceLayout = new QVBoxLayout;
     sourceLayout->addWidget(sourceView);
     sourceLayout->addWidget(positionSlider);
     sourceLayout->addWidget(openButton);
+
+    sourceGroupBox = new QGroupBox(tr("File list"));
     sourceGroupBox->setLayout(sourceLayout);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-
     mainLayout->addWidget(sourceGroupBox);
-
     setLayout(mainLayout);
 
     setWindowTitle(tr("SoundBox"));
     resize(800, 300);
 
+    ::window = this;
     init_audio();
 }
 
-void Window::setSourceModel(QAbstractItemModel *model)
+void Window::updateSlider(int pos) {
+    positionSlider->blockSignals(true);
+    positionSlider->setValue(pos);
+    positionSlider->blockSignals(false);
+}
+
+void Window::seek()
 {
-    sourceView->setModel(model);
+    int pos = positionSlider->sliderPosition();
+    fprintf(stderr, "Position: %d\n", pos);
+
+    audio_state.seek_request = true;
+    audio_state.seek_pos = pos;
 }
 
 void Window::openFile()
@@ -69,11 +83,11 @@ void Window::openFile()
     fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
     if (fileDialog.exec() == QDialog::Accepted) {
         QStringList files = fileDialog.selectedFiles();
-        for (const auto& f: files)
+        for (const auto& file: files)
         {
             QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
             model->insertRow(model->rowCount());
-            model->setData(model->index(model->rowCount() - 1, 0), f);
+            model->setData(model->index(model->rowCount() - 1, 0), file);
         }
     }
 }
@@ -96,4 +110,3 @@ void Window::resizeColumnToContents()
 {
     sourceView->setColumnWidth(0, 350);
 }
-

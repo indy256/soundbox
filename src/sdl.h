@@ -13,6 +13,7 @@ extern "C" {
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_thread.h>
 #include <stdio.h>
+#include "window.h"
 
 #include <algorithm>
 #include <atomic>
@@ -29,9 +30,9 @@ struct PacketQueue {
 
 PacketQueue audioq;
 SwrContext *swr;
-bool quit = false;
 char *filename;
-std::atomic_bool new_file(false);
+std::atomic_bool new_file(false), quit(false);
+Window *window;
 
 void packet_queue_init(PacketQueue *pq) {
     pq->mutex = SDL_CreateMutex();
@@ -75,8 +76,9 @@ struct AudioState {
     int audioStream;
     AVStream *av_stream;
     double audio_clock;
+    double duration;
     int64_t seek_pos;
-    bool seek_request;
+    std::atomic_bool seek_request;
     int audio_buf_size;
     int audio_buf_index;
     SDL_AudioDeviceID device_id;
@@ -118,6 +120,10 @@ int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
             return -1;
         }
         audio_state->audio_clock = pkt->pts * av_q2d(audio_state->av_stream->time_base);
+        window->requestSliderUpdate(audio_state->audio_clock * 100 / audio_state->duration);
+
+//        fprintf(stderr, "clock: %f\n", audio_state->audio_clock);
+//        fprintf(stderr, "clock: %f\n", audio_state->duration);
 
         if (avcodec_send_packet(audio_state->codecCtx, pkt) < 0) {
             return -1;
@@ -226,9 +232,7 @@ int open_file(const char* filename) {
     audio_state.seek_request = false;
     audio_state.audio_buf_size = 0;
     audio_state.audio_buf_index = 0;
-
-//    AudioState audio_state{formatCtx, dec_ctx, audioStream,
-//                formatCtx->streams[audioStream], 0.0, 0, false};
+    audio_state.duration = audio_state.av_stream->duration * av_q2d(audio_state.av_stream->time_base);
 
     // Set audio settings from codec info
     SDL_AudioSpec wanted_spec;
@@ -259,40 +263,6 @@ int open_file(const char* filename) {
 
     SDL_PauseAudioDevice(device_id, 0);
 
-//    SDL_Delay(1000);
-//    audio_state.seek_request = true;
-//    int64_t delta = 25;
-//    audio_state.seek_pos += delta;
-
-//    while (true) {
-//        SDL_Delay(100);
-//        printf("s\n");
-//        SDL_Event event;
-//        while(SDL_PollEvent(&event)) {
-//            printf("%d\n", event.type);
-//            switch (event.type) {
-//                case SDL_KEYDOWN:
-//                    printf("s\n");
-//                    switch(event.key.keysym.sym) {
-//                        case SDLK_RIGHT:
-//                            audio_state.seek_request = true;
-//                            int64_t delta = 11;
-//                            audio_state.seek_pos += delta;
-//                            break;
-//                    }
-//                    break;
-//                case SDL_QUIT:
-//                    quit = true;
-//                    SDL_Quit();
-//                    break;
-//             default:
-//                 break;
-//            }
-//        }
-//    }
-
-//    avcodec_close(dec_ctx);
-//    avformat_close_input(&formatCtx);
     return 0;
 }
 
@@ -307,7 +277,7 @@ int decode_thread(void *arg) {
         if (audio_state.seek_request) {
             AVRational a{1, AV_TIME_BASE};
             AVRational b{1, 1};
-            int64_t seek_time = av_rescale_q(audio_state.seek_pos, b, audio_state.av_stream->time_base);
+            int64_t seek_time = av_rescale_q(audio_state.duration * audio_state.seek_pos / 100 , b, audio_state.av_stream->time_base);
             av_seek_frame(audio_state.formatCtx, audio_state.audioStream, seek_time, 0);
             audio_state.seek_request = false;
             SDL_LockMutex(audioq.mutex);
