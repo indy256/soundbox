@@ -1,3 +1,4 @@
+#include <QStandardItemModel>
 #include <QtWidgets>
 
 #include "window.h"
@@ -16,6 +17,17 @@ static void setTextColor(QWidget *w, const QColor &c)
         palette.setColor(QPalette::Active, QPalette::Text, c);
         w->setPalette(palette);
     }
+}
+
+QAbstractItemModel *createAudioFileModel(QObject *parent)
+{
+    QStandardItemModel *model = new QStandardItemModel(0, 3, parent);
+
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("File"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Duration"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Date"));
+
+    return model;
 }
 
 Window::Window()
@@ -52,6 +64,8 @@ Window::Window()
 
     setWindowTitle(tr("SoundBox"));
     resize(800, 300);
+
+    setSourceModel(createAudioFileModel(this));
 
     init_audio();
 }
