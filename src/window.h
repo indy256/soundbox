@@ -4,13 +4,8 @@
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
-class QAbstractItemModel;
-class QCheckBox;
-class QComboBox;
 class QGroupBox;
 class QLabel;
-class QLineEdit;
-class QSortFilterProxyModel;
 class QTreeView;
 class QPushButton;
 class QSlider;
@@ -23,12 +18,17 @@ class Window : public QWidget
 public:
     Window();
 
-    void setSourceModel(QAbstractItemModel *model);
     void resizeColumnToContents();
+    void callUpdateSlider(int pos) { emit requestSliderUpdate(pos); }
+
+signals:
+    void requestSliderUpdate(int pos);
 
 private slots:
+    void seek();
     void openFile();
     void doubleClicked();
+    void updateSlider(int pos);
 
 private:
     QGroupBox *sourceGroupBox;
