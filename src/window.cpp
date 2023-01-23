@@ -16,6 +16,17 @@ QAbstractItemModel *createAudioFileModel(QObject *parent)
     return model;
 }
 
+QAbstractItemModel *createAudioFileModel(QObject *parent)
+{
+    QStandardItemModel *model = new QStandardItemModel(0, 3, parent);
+
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("File"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Duration"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Date"));
+
+    return model;
+}
+
 Window::Window()
 {
     sourceView = new QTreeView;
@@ -57,6 +68,8 @@ Window::Window()
     resize(800, 300);
 
     ::window = this;
+    setSourceModel(createAudioFileModel(this));
+
     init_audio();
 }
 
