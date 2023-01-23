@@ -57,7 +57,6 @@ Window::Window()
     resize(800, 300);
 
     ::window = this;
-    setSourceModel(createAudioFileModel(this));
 
     init_audio();
 }
