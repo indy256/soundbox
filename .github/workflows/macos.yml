@@ -112,11 +112,12 @@ jobs:
           ./configure \
           --extra-cflags="$UNGUARDED" \
           --extra-cxxflags="$UNGUARDED" \
-          --enable-protocol=file \
           --disable-programs \
           --disable-doc \
           --disable-network \
           --disable-everything \
+          --disable-decoder=jpeg2000 \
+          --enable-protocol=file \
           --enable-hwaccel=h264_videotoolbox \
           --enable-hwaccel=hevc_videotoolbox \
           --enable-hwaccel=mpeg1_videotoolbox \
