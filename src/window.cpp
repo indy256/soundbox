@@ -18,12 +18,22 @@ QAbstractItemModel *createAudioFileModel(QObject *parent)
 
 Window::Window()
 {
+    m_settingsFile = QApplication::applicationDirPath() + "/soundbox.ini";
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    audioFiles = settings.value("files", "").toStringList();
+
     sourceView = new QTreeView;
     sourceView->setRootIsDecorated(false);
     sourceView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     sourceView->setAlternatingRowColors(true);
     sourceView->setSortingEnabled(true);
     sourceView->setModel(createAudioFileModel(this));
+
+    for(const QString &f: audioFiles) {
+        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+        model->insertRow(model->rowCount());
+        model->setData(model->index(model->rowCount() - 1, 0), f);
+    }
 
     positionSlider = new QSlider(Qt::Horizontal, this);
 
@@ -91,6 +101,14 @@ void Window::openFile()
             model->setData(model->index(model->rowCount() - 1, 0), file);
         }
     }
+    QStringList files;
+    for(int row = 0; row < sourceView->model()->rowCount(); row++) {
+        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+        files.append(model->data(model->index(row, 0)).toString());
+    }
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    settings.setValue("files", files);
+    settings.sync();
 }
 
 void Window::doubleClicked()

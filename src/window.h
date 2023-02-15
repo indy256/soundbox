@@ -35,6 +35,8 @@ private:
     QTreeView *sourceView;
     QPushButton *openButton;
     QSlider *positionSlider;
+    QString m_settingsFile;
+    QStringList audioFiles;
 };
 
 #endif // WINDOW_H
