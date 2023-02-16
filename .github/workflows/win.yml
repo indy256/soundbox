@@ -129,7 +129,6 @@ jobs:
           cd %REPO_NAME%
           git submodule update --init submodules/FFmpeg
           cd submodules/FFmpeg
-          cd Libraries
           set CHERE_INVOKING=enabled_from_arguments
           set MSYS2_PATH_TYPE=inherit
           call c:\tools\msys64\usr\bin\bash --login ..\scripts\build_ffmpeg_win.sh
