@@ -36,16 +36,19 @@ Window::Window()
         model->setData(model->index(model->rowCount() - 1, 0), f);
     }
 
+    volumeSlider = new Slider(Qt::Horizontal, this);
+    volumeSlider->setValue(50);
+
     positionSlider = new Slider(Qt::Horizontal, this);
     positionSlider->setMaximum(999);
-    int a1 = positionSlider->minimum();
-    int a2 = positionSlider->maximum();
-    int a3 = positionSlider->width();
 
     openButton = new QPushButton("Open file", this);
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
+
+    connect(volumeSlider, &Slider::valueChanged,
+            this, &Window::setVolume);
 
     connect(positionSlider, &Slider::valueChanged,
             positionSlider, &Slider::valueChangedHandler);
@@ -60,14 +63,21 @@ Window::Window()
 
     QVBoxLayout *sourceLayout = new QVBoxLayout;
     sourceLayout->addWidget(sourceView);
-    sourceLayout->addWidget(positionSlider);
-    sourceLayout->addWidget(openButton);
 
     sourceGroupBox = new QGroupBox(tr("File list"));
     sourceGroupBox->setLayout(sourceLayout);
 
+    QHBoxLayout *controlsLayout = new QHBoxLayout;
+    controlsLayout->addWidget(volumeSlider);
+    controlsLayout->addWidget(positionSlider);
+    controlsLayout->addWidget(openButton);
+
+    QGroupBox *controlsGroupBox = new QGroupBox(tr("Controls"));
+    controlsGroupBox->setLayout(controlsLayout);
+
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(sourceGroupBox);
+    mainLayout->addWidget(controlsGroupBox);
     setLayout(mainLayout);
 
     setWindowTitle(tr("SoundBox"));
@@ -85,6 +95,10 @@ void Window::updateSlider(int pos) {
     positionSlider->blockSignals(true);
     positionSlider->setValue(pos * (positionSlider->maximum() - positionSlider->minimum() + 1) / 1000);
     positionSlider->blockSignals(false);
+}
+
+void Window::setVolume() {
+    audio_state.volume = volumeSlider->sliderPosition() * 100 / (volumeSlider->maximum() - volumeSlider->minimum() + 1);
 }
 
 void Window::seek()

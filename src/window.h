@@ -28,6 +28,7 @@ signals:
     void requestSliderUpdate(int pos);
 
 private slots:
+    void setVolume();
     void seek();
     void openFile();
     void doubleClicked();
@@ -37,6 +38,7 @@ private:
     QGroupBox *sourceGroupBox;
     QTreeView *sourceView;
     QPushButton *openButton;
+    QSlider *volumeSlider;
     Slider *positionSlider;
     QString m_settingsFile;
     QStringList audioFiles;
