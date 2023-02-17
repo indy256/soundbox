@@ -3,6 +3,7 @@
 
 #include "window.h"
 #include "sdl.h"
+#include "slider/slider.h"
 #include <string.h>
 
 QAbstractItemModel *createAudioFileModel(QObject *parent)
@@ -35,14 +36,20 @@ Window::Window()
         model->setData(model->index(model->rowCount() - 1, 0), f);
     }
 
-    positionSlider = new QSlider(Qt::Horizontal, this);
+    positionSlider = new Slider(Qt::Horizontal, this);
+    positionSlider->setMaximum(999);
+    int a1 = positionSlider->minimum();
+    int a2 = positionSlider->maximum();
+    int a3 = positionSlider->width();
 
     openButton = new QPushButton("Open file", this);
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
 
-    connect(positionSlider, &QSlider::valueChanged,
+    connect(positionSlider, &Slider::valueChanged,
+            positionSlider, &Slider::valueChangedHandler);
+    connect(positionSlider, &Slider::valueChanged2,
             this, &Window::seek);
 
     connect(this, &Window::requestSliderUpdate,
@@ -72,14 +79,17 @@ Window::Window()
 }
 
 void Window::updateSlider(int pos) {
+    if (positionSlider->is_mouse_move()) {
+        return;
+    }
     positionSlider->blockSignals(true);
-    positionSlider->setValue(pos);
+    positionSlider->setValue(pos * (positionSlider->maximum() - positionSlider->minimum() + 1) / 1000);
     positionSlider->blockSignals(false);
 }
 
 void Window::seek()
 {
-    int pos = positionSlider->sliderPosition();
+    int pos = positionSlider->sliderPosition() * 1000 / (positionSlider->maximum() - positionSlider->minimum() + 1);
     fprintf(stderr, "Position: %d\n", pos);
 
     audio_state.seek_request = true;

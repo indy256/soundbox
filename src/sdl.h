@@ -120,7 +120,9 @@ int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
             return -1;
         }
         audio_state->audio_clock = pkt->pts * av_q2d(audio_state->av_stream->time_base);
-        window->requestSliderUpdate(audio_state->audio_clock * 100 / audio_state->duration);
+        if (!audio_state->seek_request) {
+            window->callUpdateSlider(audio_state->audio_clock * 1000 / audio_state->duration); //emit an event to be executed in the UI thread
+        }
 
 //        fprintf(stderr, "clock: %f\n", audio_state->audio_clock);
 //        fprintf(stderr, "clock: %f\n", audio_state->duration);
@@ -277,7 +279,7 @@ int decode_thread(void *arg) {
         if (audio_state.seek_request) {
             AVRational a{1, AV_TIME_BASE};
             AVRational b{1, 1};
-            int64_t seek_time = av_rescale_q(audio_state.duration * audio_state.seek_pos / 100 , b, audio_state.av_stream->time_base);
+            int64_t seek_time = av_rescale_q(audio_state.duration * audio_state.seek_pos / 1000 , b, audio_state.av_stream->time_base);
             av_seek_frame(audio_state.formatCtx, audio_state.audioStream, seek_time, 0);
             audio_state.seek_request = false;
             SDL_LockMutex(audioq.mutex);

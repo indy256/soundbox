@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #include <QWidget>
+#include "slider/slider.h"
 
 QT_BEGIN_NAMESPACE
 class QGroupBox;
@@ -19,7 +20,9 @@ public:
     Window();
 
     void resizeColumnToContents();
-    void callUpdateSlider(int pos) { emit requestSliderUpdate(pos); }
+    void callUpdateSlider(int pos) {
+        emit requestSliderUpdate(pos);
+    }
 
 signals:
     void requestSliderUpdate(int pos);
@@ -34,7 +37,7 @@ private:
     QGroupBox *sourceGroupBox;
     QTreeView *sourceView;
     QPushButton *openButton;
-    QSlider *positionSlider;
+    Slider *positionSlider;
     QString m_settingsFile;
     QStringList audioFiles;
 };
