@@ -42,7 +42,8 @@ Window::Window()
     positionSlider = new Slider(Qt::Horizontal, this);
     positionSlider->setMaximum(999);
 
-    openButton = new QPushButton("Open file", this);
+    addFileButton = new QPushButton("Add file", this);
+    addFolderButton = new QPushButton("Add folder", this);
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
@@ -58,8 +59,10 @@ Window::Window()
     connect(this, &Window::requestSliderUpdate,
             this, &Window::updateSlider);
 
-    connect(openButton, &QPushButton::clicked,
-            this, &Window::openFile);
+    connect(addFileButton, &QPushButton::clicked,
+            this, &Window::addFile);
+    connect(addFolderButton, &QPushButton::clicked,
+            this, &Window::addFolder);
 
     QVBoxLayout *sourceLayout = new QVBoxLayout;
     sourceLayout->addWidget(sourceView);
@@ -70,7 +73,8 @@ Window::Window()
     QHBoxLayout *controlsLayout = new QHBoxLayout;
     controlsLayout->addWidget(volumeSlider);
     controlsLayout->addWidget(positionSlider);
-    controlsLayout->addWidget(openButton);
+    controlsLayout->addWidget(addFileButton);
+    controlsLayout->addWidget(addFolderButton);
 
     QGroupBox *controlsGroupBox = new QGroupBox(tr("Controls"));
     controlsGroupBox->setLayout(controlsLayout);
@@ -110,16 +114,45 @@ void Window::seek()
     audio_state.seek_pos = pos;
 }
 
-void Window::openFile()
+void Window::addFile()
 {
     QFileDialog fileDialog(this);
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setWindowTitle(tr("Open audio"));
+    fileDialog.setWindowTitle(tr("Open file"));
     fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
     if (fileDialog.exec() == QDialog::Accepted) {
         QStringList files = fileDialog.selectedFiles();
         for (const auto& file: files)
         {
+            QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+            model->insertRow(model->rowCount());
+            model->setData(model->index(model->rowCount() - 1, 0), file);
+        }
+    }
+    QStringList files;
+    for(int row = 0; row < sourceView->model()->rowCount(); row++) {
+        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+        files.append(model->data(model->index(row, 0)).toString());
+    }
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    settings.setValue("files", files);
+    settings.sync();
+}
+
+void Window::addFolder()
+{
+    QFileDialog fileDialog(this);
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.setFileMode(QFileDialog::Directory);
+    fileDialog.setWindowTitle(tr("Open folder"));
+    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
+    if (fileDialog.exec() == QDialog::Accepted) {
+        QDir dir = fileDialog.directory();
+        QString folder = fileDialog.selectedFiles().size() > 0 ? fileDialog.selectedFiles()[0] : "";
+
+        QDirIterator it(folder, QStringList() << "*.mp3", QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const auto& file = it.next();
             QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
             model->insertRow(model->rowCount());
             model->setData(model->index(model->rowCount() - 1, 0), file);

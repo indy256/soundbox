@@ -30,14 +30,16 @@ signals:
 private slots:
     void setVolume();
     void seek();
-    void openFile();
+    void addFile();
+    void addFolder();
     void doubleClicked();
     void updateSlider(int pos);
 
 private:
     QGroupBox *sourceGroupBox;
     QTreeView *sourceView;
-    QPushButton *openButton;
+    QPushButton *addFileButton;
+    QPushButton *addFolderButton;
     QSlider *volumeSlider;
     Slider *positionSlider;
     QString m_settingsFile;
