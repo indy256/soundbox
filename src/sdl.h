@@ -77,6 +77,7 @@ struct AudioState {
     AVStream *av_stream;
     double audio_clock;
     double duration;
+    int volume;
     int64_t seek_pos;
     std::atomic_bool seek_request;
     int audio_buf_size;
@@ -138,7 +139,6 @@ int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
 
 void audio_callback(void *userdata, Uint8 *stream, int size) {
     static uint8_t audio_buf[MAX_AUDIO_FRAME_SIZE * 3 / 2];
-
     AudioState *audio_state = (AudioState *)userdata;
     SDL_LockMutex(audio_state->mutex);
     while (size > 0) {
@@ -154,7 +154,9 @@ void audio_callback(void *userdata, Uint8 *stream, int size) {
             audio_state->audio_buf_index = 0;
         }
         int len = std::min(audio_state->audio_buf_size - audio_state->audio_buf_index, size);
-        memcpy(stream, (uint8_t *)audio_buf + audio_state->audio_buf_index, len);
+//        memcpy(stream, (uint8_t *)audio_buf + audio_state->audio_buf_index, len);
+        memset(stream, 0, len);
+        SDL_MixAudioFormat(stream, (uint8_t *)audio_buf + audio_state->audio_buf_index, AUDIO_S16SYS, len, audio_state->volume);
         size -= len;
         stream += len;
         audio_state->audio_buf_index += len;
@@ -230,6 +232,7 @@ int open_file(const char* filename) {
     audio_state.audioStream = audioStream;
     audio_state.av_stream = formatCtx->streams[audioStream];
     audio_state.audio_clock = 0.0;
+    audio_state.volume = 50;
     audio_state.seek_pos = 0;
     audio_state.seek_request = false;
     audio_state.audio_buf_size = 0;
