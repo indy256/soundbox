@@ -12,6 +12,7 @@ qt_add_executable(soundbox
     src/sdl.h
     src/main.cpp
     src/window.cpp src/window.h
+    src/slider/slider.cpp src/slider/slider.h
 )
 
 set_target_properties(soundbox PROPERTIES
