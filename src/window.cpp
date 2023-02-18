@@ -31,6 +31,13 @@ Window::Window()
     sourceView->setModel(createAudioFileModel(this));
     sourceView->setContextMenuPolicy(Qt::CustomContextMenu);
     sourceView->setUniformRowHeights(true);
+    sourceView->setSelectionMode(QAbstractItemView::ContiguousSelection);
+
+    m_playButton = new QToolButton(this);
+    m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+
+    m_pauseButton = new QToolButton(this);
+    m_pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
 
     for(const QString &f: audioFiles) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
@@ -77,6 +84,9 @@ Window::Window()
     QHBoxLayout *controlsLayout = new QHBoxLayout;
     controlsLayout->addWidget(volumeSlider);
     controlsLayout->addWidget(positionSlider);
+    controlsLayout->addWidget(m_playButton);
+    controlsLayout->addWidget(m_pauseButton);
+    controlsLayout->addWidget(addFileButton);
     controlsLayout->addWidget(addFileButton);
     controlsLayout->addWidget(addFolderButton);
 
@@ -88,7 +98,7 @@ Window::Window()
     mainLayout->addWidget(controlsGroupBox);
     setLayout(mainLayout);
 
-    setWindowTitle(tr("SoundBox"));
+    setWindowTitle(tr("SoundBox v0.0.1"));
     resize(800, 500);
 
     ::window = this;

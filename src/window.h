@@ -39,6 +39,8 @@ private slots:
 private:
     QGroupBox *sourceGroupBox;
     QTreeView *sourceView;
+    QAbstractButton *m_pauseButton = nullptr;
+    QAbstractButton *m_playButton = nullptr;
     QPushButton *addFileButton;
     QPushButton *addFolderButton;
     QSlider *volumeSlider;
