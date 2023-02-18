@@ -35,7 +35,8 @@ jobs:
           libxcb-render-util0-dev libxcb-util0-dev libxcb-xkb-dev libxrender-dev \
           libasound-dev libpulse-dev libxcb-sync0-dev libxcb-randr0-dev libegl1-mesa-dev \
           libx11-xcb-dev libffi-dev libncurses5-dev pkg-config texi2html bison yasm \
-          zlib1g-dev xutils-dev chrpath gperf wget -y --force-yes && \
+          zlib1g-dev xutils-dev chrpath gperf wget -y --force-yes \
+          unixodbc-dev=2.3.7 unixodbc=2.3.7 odbcinst1debian2=2.3.7 odbcinst=2.3.7 && \
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
           sudo apt-get update && \
           sudo apt-get install gcc-11 g++-11 -y && \
