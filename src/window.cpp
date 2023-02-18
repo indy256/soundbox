@@ -8,12 +8,8 @@
 
 QAbstractItemModel *createAudioFileModel(QObject *parent)
 {
-    QStandardItemModel *model = new QStandardItemModel(0, 3, parent);
-
+    QStandardItemModel *model = new QStandardItemModel(0, 1, parent);
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("File"));
-    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Duration"));
-    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Date"));
-
     return model;
 }
 
@@ -33,12 +29,6 @@ Window::Window()
     sourceView->setUniformRowHeights(true);
     sourceView->setSelectionMode(QAbstractItemView::ContiguousSelection);
 
-    m_playButton = new QToolButton(this);
-    m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
-
-    m_pauseButton = new QToolButton(this);
-    m_pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
-
     for(const QString &f: audioFiles) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
         model->insertRow(model->rowCount());
@@ -51,13 +41,24 @@ Window::Window()
     positionSlider = new Slider(Qt::Horizontal, this);
     positionSlider->setMaximum(999);
 
-    addFileButton = new QPushButton("Add file", this);
-    addFolderButton = new QPushButton("Add folder", this);
+    QToolBar *playbackToolBar = addToolBar(tr("Playback"));
+    QAction *playAct = new QAction(style()->standardIcon(QStyle::SP_MediaPlay), tr("&Play"), this);
+    playAct->setShortcuts(QKeySequence::New);
+    playAct->setStatusTip(tr("Play"));
+    playbackToolBar->addAction(playAct);
+    QAction *pauseAct = new QAction(style()->standardIcon(QStyle::SP_MediaPause), tr("&Pause"), this);
+    pauseAct->setShortcuts(QKeySequence::New);
+    pauseAct->setStatusTip(tr("Pause"));
+    playbackToolBar->addAction(pauseAct);
+
+    QToolBar *volumeToolBar = addToolBar(tr("Volume"));
+    volumeToolBar->addWidget(volumeSlider);
+
+    QToolBar *positionToolBar = addToolBar(tr("Position"));
+    positionToolBar->addWidget(positionSlider);
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
-    connect(sourceView, &QTreeView::customContextMenuRequested,
-            this, &Window::contextMenu);
 
     connect(volumeSlider, &Slider::valueChanged,
             this, &Window::setVolume);
@@ -70,33 +71,10 @@ Window::Window()
     connect(this, &Window::requestSliderUpdate,
             this, &Window::updateSlider);
 
-    connect(addFileButton, &QPushButton::clicked,
-            this, &Window::addFile);
-    connect(addFolderButton, &QPushButton::clicked,
-            this, &Window::addFolder);
+    createMenu();
 
-    QVBoxLayout *sourceLayout = new QVBoxLayout;
-    sourceLayout->addWidget(sourceView);
-
-    sourceGroupBox = new QGroupBox(tr("File list"));
-    sourceGroupBox->setLayout(sourceLayout);
-
-    QHBoxLayout *controlsLayout = new QHBoxLayout;
-    controlsLayout->addWidget(volumeSlider);
-    controlsLayout->addWidget(positionSlider);
-    controlsLayout->addWidget(m_playButton);
-    controlsLayout->addWidget(m_pauseButton);
-    controlsLayout->addWidget(addFileButton);
-    controlsLayout->addWidget(addFileButton);
-    controlsLayout->addWidget(addFolderButton);
-
-    QGroupBox *controlsGroupBox = new QGroupBox(tr("Controls"));
-    controlsGroupBox->setLayout(controlsLayout);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(sourceGroupBox);
-    mainLayout->addWidget(controlsGroupBox);
-    setLayout(mainLayout);
+    setCentralWidget(sourceView);
+    statusBar()->showMessage(tr("Ready"));
 
     setWindowTitle(tr("SoundBox v0.0.1"));
     resize(800, 500);
@@ -106,7 +84,30 @@ Window::Window()
     init_audio();
 }
 
-void Window::updateSlider(int pos) {
+void Window::createMenu()
+{
+    fileMenu = new QMenu(tr("&File"), this);
+    addFilesAction = fileMenu->addAction(tr("Add files..."));
+    addFolderAction = fileMenu->addAction(tr("Add folder..."));
+    exitAction = fileMenu->addAction(tr("E&xit"));
+    menuBar()->addMenu(fileMenu);
+    connect(addFilesAction, &QAction::triggered, this, &Window::addFiles);
+    connect(addFolderAction, &QAction::triggered, this, &Window::addFolder);
+    connect(exitAction, &QAction::triggered, this, &QWidget::close);
+
+    editMenu = new QMenu(tr("&Edit"), this);
+    menuBar()->addMenu(editMenu);
+
+    playbackMenu = new QMenu(tr("&Playback"), this);
+    menuBar()->addMenu(playbackMenu);
+
+    helpMenu = new QMenu(tr("&Help"), this);
+    aboutAction = helpMenu->addAction(tr("About"));
+    menuBar()->addMenu(helpMenu);
+}
+
+void Window::updateSlider(int pos)
+{
     if (positionSlider->is_mouse_move()) {
         return;
     }
@@ -128,7 +129,7 @@ void Window::seek()
     audio_state.seek_pos = pos;
 }
 
-void Window::addFile()
+void Window::addFiles()
 {
     QSettings settings(m_settingsFile, QSettings::IniFormat);
     QString default_path = QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath());
@@ -184,7 +185,8 @@ void Window::addFolder()
     }
 }
 
-void Window::saveFiles() {
+void Window::saveFiles()
+{
     QStringList files;
     for(int row = 0; row < sourceView->model()->rowCount(); row++) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
