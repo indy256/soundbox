@@ -130,17 +130,18 @@ void Window::seek()
 
 void Window::addFile()
 {
-    QFileDialog fileDialog(this);
-
     QSettings settings(m_settingsFile, QSettings::IniFormat);
     QString default_path = QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath());
     QString path = settings.value("current_folder", default_path).toString();
 
-    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setWindowTitle(tr("Open file"));
-    fileDialog.setDirectory(path);
-    if (fileDialog.exec() == QDialog::Accepted) {
-        QStringList files = fileDialog.selectedFiles();
+    QString selectedFilter;
+    QStringList files = QFileDialog::getOpenFileNames(
+                                this, tr("Open file"),
+                                path,
+                                tr("All Files (*);;MPEG layer 3 (*.MP3)"),
+                                &selectedFilter);
+
+    if (files.count()) {
         bool first = true;
         for (const auto& file: files)
         {
@@ -156,8 +157,8 @@ void Window::addFile()
                 first = false;
             }
         }
+        saveFiles();
     }
-    saveFiles();
 }
 
 void Window::addFolder()
