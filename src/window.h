@@ -12,7 +12,7 @@ class QPushButton;
 class QSlider;
 QT_END_NAMESPACE
 
-class Window : public QWidget
+class Window : public QMainWindow
 {
     Q_OBJECT
 
@@ -31,16 +31,23 @@ signals:
 private slots:
     void setVolume();
     void seek();
-    void addFile();
+    void addFiles();
     void addFolder();
     void doubleClicked();
     void updateSlider(int pos);
 
 private:
+    QMenu *fileMenu;
+    QAction *exitAction;
+    QAction *addFilesAction;
+    QAction *addFolderAction;
+    QMenu *editMenu;
+    QMenu *playbackMenu;
+    QMenu *helpMenu;
+    QAction *aboutAction;
+
     QGroupBox *sourceGroupBox;
     QTreeView *sourceView;
-    QAbstractButton *m_pauseButton = nullptr;
-    QAbstractButton *m_playButton = nullptr;
     QPushButton *addFileButton;
     QPushButton *addFolderButton;
     QSlider *volumeSlider;
@@ -48,6 +55,7 @@ private:
     QString m_settingsFile;
     QStringList audioFiles;
 
+    void createMenu();
     void saveFiles();
 };
 
