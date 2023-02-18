@@ -30,6 +30,7 @@ Window::Window()
     sourceView->setSortingEnabled(true);
     sourceView->setModel(createAudioFileModel(this));
     sourceView->setContextMenuPolicy(Qt::CustomContextMenu);
+    sourceView->setUniformRowHeights(true);
 
     for(const QString &f: audioFiles) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
@@ -120,16 +121,30 @@ void Window::seek()
 void Window::addFile()
 {
     QFileDialog fileDialog(this);
+
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    QString default_path = QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath());
+    QString path = settings.value("current_folder", default_path).toString();
+
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
     fileDialog.setWindowTitle(tr("Open file"));
-    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
+    fileDialog.setDirectory(path);
     if (fileDialog.exec() == QDialog::Accepted) {
         QStringList files = fileDialog.selectedFiles();
+        bool first = true;
         for (const auto& file: files)
         {
             QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
             model->insertRow(model->rowCount());
             model->setData(model->index(model->rowCount() - 1, 0), file);
+
+            if (first) {
+                QDir d = QFileInfo(file).absoluteDir();
+                QSettings settings(m_settingsFile, QSettings::IniFormat);
+                settings.setValue("current_folder", d.absolutePath());
+                settings.sync();
+                first = false;
+            }
         }
     }
     saveFiles();
@@ -137,15 +152,12 @@ void Window::addFile()
 
 void Window::addFolder()
 {
-    QFileDialog fileDialog(this);
-    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setFileMode(QFileDialog::Directory);
-    fileDialog.setWindowTitle(tr("Open folder"));
-    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
-    if (fileDialog.exec() == QDialog::Accepted) {
-        QDir dir = fileDialog.directory();
-        QString folder = fileDialog.selectedFiles().size() > 0 ? fileDialog.selectedFiles()[0] : "";
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    QString default_path = QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath());
+    QString path = settings.value("current_folder", default_path).toString();
+    QString folder = QDir::toNativeSeparators(QFileDialog::getExistingDirectory(this, tr("Open folder"), path));
 
+    if (!folder.isEmpty()) {
         QDirIterator it(folder, QStringList() << "*.mp3", QDir::Files, QDirIterator::Subdirectories);
         while (it.hasNext()) {
             const auto& file = it.next();
@@ -153,8 +165,12 @@ void Window::addFolder()
             model->insertRow(model->rowCount());
             model->setData(model->index(model->rowCount() - 1, 0), file);
         }
+
+        saveFiles();
+        QSettings settings(m_settingsFile, QSettings::IniFormat);
+        settings.setValue("current_folder", folder);
+        settings.sync();
     }
-    saveFiles();
 }
 
 void Window::saveFiles() {
