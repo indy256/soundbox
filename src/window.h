@@ -23,6 +23,7 @@ public:
     void callUpdateSlider(int pos) {
         emit requestSliderUpdate(pos);
     }
+    void contextMenu(const QPoint &pos);
 
 signals:
     void requestSliderUpdate(int pos);
@@ -44,6 +45,8 @@ private:
     Slider *positionSlider;
     QString m_settingsFile;
     QStringList audioFiles;
+
+    void saveFiles();
 };
 
 #endif // WINDOW_H

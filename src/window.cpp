@@ -29,6 +29,7 @@ Window::Window()
     sourceView->setAlternatingRowColors(true);
     sourceView->setSortingEnabled(true);
     sourceView->setModel(createAudioFileModel(this));
+    sourceView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     for(const QString &f: audioFiles) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
@@ -47,6 +48,8 @@ Window::Window()
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
+    connect(sourceView, &QTreeView::customContextMenuRequested,
+            this, &Window::contextMenu);
 
     connect(volumeSlider, &Slider::valueChanged,
             this, &Window::setVolume);
@@ -85,7 +88,7 @@ Window::Window()
     setLayout(mainLayout);
 
     setWindowTitle(tr("SoundBox"));
-    resize(800, 300);
+    resize(800, 500);
 
     ::window = this;
 
@@ -129,14 +132,7 @@ void Window::addFile()
             model->setData(model->index(model->rowCount() - 1, 0), file);
         }
     }
-    QStringList files;
-    for(int row = 0; row < sourceView->model()->rowCount(); row++) {
-        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
-        files.append(model->data(model->index(row, 0)).toString());
-    }
-    QSettings settings(m_settingsFile, QSettings::IniFormat);
-    settings.setValue("files", files);
-    settings.sync();
+    saveFiles();
 }
 
 void Window::addFolder()
@@ -158,6 +154,10 @@ void Window::addFolder()
             model->setData(model->index(model->rowCount() - 1, 0), file);
         }
     }
+    saveFiles();
+}
+
+void Window::saveFiles() {
     QStringList files;
     for(int row = 0; row < sourceView->model()->rowCount(); row++) {
         QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
@@ -185,4 +185,22 @@ void Window::doubleClicked()
 void Window::resizeColumnToContents()
 {
     sourceView->setColumnWidth(0, 350);
+}
+
+void Window::contextMenu(const QPoint &pos)
+{
+    const QModelIndex item = sourceView->indexAt(pos);
+
+    int row = item.row();
+    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+
+    QMenu menu;
+    QAction *removeAction = menu.addAction("Remove");
+    QAction *action = menu.exec(sourceView->mapToGlobal(pos));
+    if (!action)
+        return;
+    if (action == removeAction) {
+        model->removeRow(row);
+        saveFiles();
+    }
 }
