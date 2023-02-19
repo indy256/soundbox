@@ -102,3 +102,14 @@ ELSE()
         ${CMAKE_SOURCE_DIR}/submodules/FFmpeg/libswresample/libswresample.a
     )
 ENDIF()
+
+set(systray_resource_files
+    "images/soundbox.png"
+)
+
+qt_add_resources(soundbox "soundbox"
+    PREFIX
+        "/"
+    FILES
+        ${systray_resource_files}
+)
