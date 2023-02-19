@@ -16,24 +16,23 @@ QAbstractItemModel *createAudioFileModel(QObject *parent)
 
 Window::Window()
 {
-    QIcon icon =  QIcon(":/images/soundbox.png");
-    setWindowIcon(icon);
+    setWindowIcon(QIcon(":/images/soundbox.png"));
     m_settingsFile = QApplication::applicationDirPath() + "/soundbox.ini";
     QSettings settings(m_settingsFile, QSettings::IniFormat);
     audioFiles = settings.value("files", QStringList()).toStringList();
 
-    sourceView = new QTreeView;
-    sourceView->setRootIsDecorated(false);
-    sourceView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    sourceView->setAlternatingRowColors(true);
-    sourceView->setSortingEnabled(true);
-    sourceView->setModel(createAudioFileModel(this));
-    sourceView->setContextMenuPolicy(Qt::CustomContextMenu);
-    sourceView->setUniformRowHeights(true);
-    sourceView->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    filesView = new QTreeView;
+    filesView->setRootIsDecorated(false);
+    filesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    filesView->setAlternatingRowColors(true);
+    filesView->setSortingEnabled(true);
+    filesView->setModel(createAudioFileModel(this));
+    filesView->setContextMenuPolicy(Qt::CustomContextMenu);
+    filesView->setUniformRowHeights(true);
+    filesView->setSelectionMode(QAbstractItemView::ContiguousSelection);
 
     for(const QString &f: audioFiles) {
-        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+        QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
         model->insertRow(model->rowCount());
         model->setData(model->index(model->rowCount() - 1, 0), f);
     }
@@ -59,10 +58,10 @@ Window::Window()
     QToolBar *positionToolBar = addToolBar(tr("Position"));
     positionToolBar->addWidget(positionSlider);
 
-    connect(sourceView, &QTreeView::doubleClicked,
+    connect(filesView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
 
-    connect(sourceView, &QTreeView::customContextMenuRequested,
+    connect(filesView, &QTreeView::customContextMenuRequested,
             this, &Window::contextMenu);
 
     connect(volumeSlider, &Slider::valueChanged,
@@ -78,7 +77,7 @@ Window::Window()
 
     createMenu();
 
-    setCentralWidget(sourceView);
+    setCentralWidget(filesView);
     statusBar()->showMessage(tr("Ready"));
 
     setWindowTitle(tr("SoundBox v0.0.1"));
@@ -136,7 +135,7 @@ void Window::clear()
 
 void Window::selectAll()
 {
-    sourceView->selectAll();
+    filesView->selectAll();
 }
 
 void Window::about()
@@ -185,7 +184,7 @@ void Window::addFiles()
         bool first = true;
         for (const auto& file: files)
         {
-            QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+            QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
             model->insertRow(model->rowCount());
             model->setData(model->index(model->rowCount() - 1, 0), file);
 
@@ -212,7 +211,7 @@ void Window::addFolder()
         QDirIterator it(folder, QStringList() << "*.mp3", QDir::Files, QDirIterator::Subdirectories);
         while (it.hasNext()) {
             const auto& file = it.next();
-            QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+            QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
             model->insertRow(model->rowCount());
             model->setData(model->index(model->rowCount() - 1, 0), file);
         }
@@ -227,8 +226,8 @@ void Window::addFolder()
 void Window::saveFiles()
 {
     QStringList files;
-    for(int row = 0; row < sourceView->model()->rowCount(); row++) {
-        QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+    for(int row = 0; row < filesView->model()->rowCount(); row++) {
+        QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
         files.append(model->data(model->index(row, 0)).toString());
     }
     QSettings settings(m_settingsFile, QSettings::IniFormat);
@@ -238,8 +237,8 @@ void Window::saveFiles()
 
 void Window::doubleClicked()
 {
-    QItemSelectionModel *selectionModel  = (QItemSelectionModel  *) sourceView->selectionModel();
-    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+    QItemSelectionModel *selectionModel  = (QItemSelectionModel  *) filesView->selectionModel();
+    QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
     QModelIndexList selected = selectionModel->selection().indexes();
     int row = selected[0].row();
     QString filename = model->data(model->index(row, 0)).toString();
@@ -252,14 +251,14 @@ void Window::doubleClicked()
 
 void Window::resizeColumnToContents()
 {
-    sourceView->setColumnWidth(0, 350);
+    filesView->setColumnWidth(0, 350);
 }
 
 void Window::contextMenu(const QPoint &pos)
 {
     QMenu menu;
     QAction *removeAction = menu.addAction("Remove");
-    QAction *action = menu.exec(sourceView->mapToGlobal(pos));
+    QAction *action = menu.exec(filesView->mapToGlobal(pos));
     if (!action)
         return;
     if (action == removeAction) {
@@ -269,8 +268,8 @@ void Window::contextMenu(const QPoint &pos)
 
 void Window::removeSelection()
 {
-    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
-    QModelIndexList indexList = sourceView->selectionModel()->selection().indexes();
+    QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
+    QModelIndexList indexList = filesView->selectionModel()->selection().indexes();
     QList<int> rows;
     for(QModelIndex index: indexList) {
         rows << index.row();
@@ -288,18 +287,27 @@ void Window::readSettings()
     const QByteArray geometry = settings.value("geometry", QByteArray()).toByteArray();
     if (geometry.isEmpty()) {
         const QRect availableGeometry = screen()->availableGeometry();
-        resize(availableGeometry.width() / 3, availableGeometry.height() / 2);
+        resize(availableGeometry.width() / 2, availableGeometry.height() / 2);
         move((availableGeometry.width() - width()) / 2,
              (availableGeometry.height() - height()) / 2);
     } else {
         restoreGeometry(geometry);
     }
+
+    const int volumeValue = settings.value("volume-value", 50).toInt();
+    volumeSlider->setValue(volumeValue);
+
+    QAbstractItemModel *model = (QAbstractItemModel *) filesView->model();
+    const int currentIndex = settings.value("current-index", 0).toInt();
+    filesView->setCurrentIndex(model->index(currentIndex, 0, QModelIndex()));
 }
 
 void Window::writeSettings()
 {
     QSettings settings(m_settingsFile, QSettings::IniFormat);
     settings.setValue("geometry", saveGeometry());
+    settings.setValue("volume-value", volumeSlider->value());
+    settings.setValue("current-index", filesView->currentIndex().row());
 }
 
 void Window::pause()
