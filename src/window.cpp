@@ -20,7 +20,7 @@ Window::Window()
     setWindowIcon(icon);
     m_settingsFile = QApplication::applicationDirPath() + "/soundbox.ini";
     QSettings settings(m_settingsFile, QSettings::IniFormat);
-    audioFiles = settings.value("files", "").toStringList();
+    audioFiles = settings.value("files", QStringList()).toStringList();
 
     sourceView = new QTreeView;
     sourceView->setRootIsDecorated(false);
@@ -46,11 +46,9 @@ Window::Window()
 
     QToolBar *playbackToolBar = addToolBar(tr("Playback"));
     QAction *playAct = new QAction(style()->standardIcon(QStyle::SP_MediaPlay), tr("&Play"), this);
-    playAct->setShortcuts(QKeySequence::New);
     playAct->setStatusTip(tr("Play"));
     playbackToolBar->addAction(playAct);
     QAction *pauseAct = new QAction(style()->standardIcon(QStyle::SP_MediaPause), tr("&Pause"), this);
-    pauseAct->setShortcuts(QKeySequence::New);
     pauseAct->setStatusTip(tr("Pause"));
     playbackToolBar->addAction(pauseAct);
     playbackToolBar->setMovable(false);
@@ -105,6 +103,7 @@ void Window::createMenu()
     addFilesAction = fileMenu->addAction(tr("Add files..."));
     addFolderAction = fileMenu->addAction(tr("Add folder..."));
     exitAction = fileMenu->addAction(tr("E&xit"));
+    exitAction->setShortcuts(QKeySequence::Close);
     menuBar()->addMenu(fileMenu);
     connect(addFilesAction, &QAction::triggered, this, &Window::addFiles);
     connect(addFolderAction, &QAction::triggered, this, &Window::addFolder);
