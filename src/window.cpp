@@ -1,5 +1,6 @@
 #include <QStandardItemModel>
 #include <QtWidgets>
+#include <algorithm>
 
 #include "window.h"
 #include "sdl.h"
@@ -15,6 +16,8 @@ QAbstractItemModel *createAudioFileModel(QObject *parent)
 
 Window::Window()
 {
+    QIcon icon =  QIcon(":/images/soundbox.png");
+    setWindowIcon(icon);
     m_settingsFile = QApplication::applicationDirPath() + "/soundbox.ini";
     QSettings settings(m_settingsFile, QSettings::IniFormat);
     audioFiles = settings.value("files", "").toStringList();
@@ -50,6 +53,7 @@ Window::Window()
     pauseAct->setShortcuts(QKeySequence::New);
     pauseAct->setStatusTip(tr("Pause"));
     playbackToolBar->addAction(pauseAct);
+    playbackToolBar->setMovable(false);
 
     QToolBar *volumeToolBar = addToolBar(tr("Volume"));
     volumeToolBar->addWidget(volumeSlider);
@@ -59,6 +63,9 @@ Window::Window()
 
     connect(sourceView, &QTreeView::doubleClicked,
             this, &Window::doubleClicked);
+
+    connect(sourceView, &QTreeView::customContextMenuRequested,
+            this, &Window::contextMenu);
 
     connect(volumeSlider, &Slider::valueChanged,
             this, &Window::setVolume);
@@ -77,12 +84,20 @@ Window::Window()
     statusBar()->showMessage(tr("Ready"));
 
     setWindowTitle(tr("SoundBox v0.0.1"));
-    resize(800, 500);
+
+    readSettings();
 
     ::window = this;
 
     init_audio();
 }
+
+void Window::closeEvent(QCloseEvent *event)
+{
+    writeSettings();
+    event->accept();
+}
+
 
 void Window::createMenu()
 {
@@ -96,14 +111,39 @@ void Window::createMenu()
     connect(exitAction, &QAction::triggered, this, &QWidget::close);
 
     editMenu = new QMenu(tr("&Edit"), this);
+    clearAction = editMenu->addAction(tr("Clear"), this, &Window::clear);
+    selectAllAction = editMenu->addAction(tr("Select all"), this, &Window::selectAll);
+    selectAllAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
+    selectionMenu = editMenu->addMenu("Selection");
+    removeAction = selectionMenu->addAction(tr("Remove"), this, &Window::removeSelection);
+    removeAction->setShortcut(QKeySequence(Qt::Key_Delete));
     menuBar()->addMenu(editMenu);
 
     playbackMenu = new QMenu(tr("&Playback"), this);
+    pauseAction = playbackMenu->addAction(tr("Pause"), this, &Window::pause);
+    playAction = playbackMenu->addAction(tr("Play"), this, &Window::play);
     menuBar()->addMenu(playbackMenu);
 
     helpMenu = new QMenu(tr("&Help"), this);
-    aboutAction = helpMenu->addAction(tr("About"));
+    aboutAction = helpMenu->addAction(tr("About"), this, &Window::about);
     menuBar()->addMenu(helpMenu);
+}
+
+void Window::clear()
+{
+    selectAll();
+    removeSelection();
+}
+
+void Window::selectAll()
+{
+    sourceView->selectAll();
+}
+
+void Window::about()
+{
+   QMessageBox::about(this, tr("About Application"),
+            tr("SoundBox v0.0.1<br/><br/>Cross-platfrom audio player<br/><br/><a href='https://github.com/indy256/soundbox'>https://github.com/indy256/soundbox</a>"));
 }
 
 void Window::updateSlider(int pos)
@@ -218,18 +258,55 @@ void Window::resizeColumnToContents()
 
 void Window::contextMenu(const QPoint &pos)
 {
-    const QModelIndex item = sourceView->indexAt(pos);
-
-    int row = item.row();
-    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
-
     QMenu menu;
     QAction *removeAction = menu.addAction("Remove");
     QAction *action = menu.exec(sourceView->mapToGlobal(pos));
     if (!action)
         return;
     if (action == removeAction) {
-        model->removeRow(row);
-        saveFiles();
+        removeSelection();
     }
+}
+
+void Window::removeSelection()
+{
+    QAbstractItemModel *model = (QAbstractItemModel *) sourceView->model();
+    QModelIndexList indexList = sourceView->selectionModel()->selection().indexes();
+    QList<int> rows;
+    for(QModelIndex index: indexList) {
+        rows << index.row();
+    }
+    std::sort(rows.rbegin(), rows.rend());
+    for(int row: rows) {
+        model->removeRow(row);
+    }
+    saveFiles();
+}
+
+void Window::readSettings()
+{
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    const QByteArray geometry = settings.value("geometry", QByteArray()).toByteArray();
+    if (geometry.isEmpty()) {
+        const QRect availableGeometry = screen()->availableGeometry();
+        resize(availableGeometry.width() / 3, availableGeometry.height() / 2);
+        move((availableGeometry.width() - width()) / 2,
+             (availableGeometry.height() - height()) / 2);
+    } else {
+        restoreGeometry(geometry);
+    }
+}
+
+void Window::writeSettings()
+{
+    QSettings settings(m_settingsFile, QSettings::IniFormat);
+    settings.setValue("geometry", saveGeometry());
+}
+
+void Window::pause()
+{
+}
+
+void Window::play()
+{
 }

@@ -42,7 +42,13 @@ private:
     QAction *addFilesAction;
     QAction *addFolderAction;
     QMenu *editMenu;
+    QAction *clearAction;
+    QAction *selectAllAction;
+    QMenu *selectionMenu;
+    QAction *removeAction;
     QMenu *playbackMenu;
+    QAction *pauseAction;
+    QAction *playAction;
     QMenu *helpMenu;
     QAction *aboutAction;
 
@@ -56,7 +62,16 @@ private:
     QStringList audioFiles;
 
     void createMenu();
+    void about();
     void saveFiles();
+    void clear();
+    void selectAll();
+    void removeSelection();
+    void readSettings();
+    void writeSettings();
+    void closeEvent(QCloseEvent *event);
+    void pause();
+    void play();
 };
 
 #endif // WINDOW_H
