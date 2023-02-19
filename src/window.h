@@ -52,8 +52,7 @@ private:
     QMenu *helpMenu;
     QAction *aboutAction;
 
-    QGroupBox *sourceGroupBox;
-    QTreeView *sourceView;
+    QTreeView *filesView;
     QPushButton *addFileButton;
     QPushButton *addFolderButton;
     QSlider *volumeSlider;
