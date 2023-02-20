@@ -1,6 +1,6 @@
-#include <QtWidgets>
-
 #include "slider.h"
+
+#include <QtWidgets>
 
 void Slider::mousePressEvent(QMouseEvent *e) {
     if (e->button() == Qt::MouseButton::LeftButton) {
@@ -19,11 +19,11 @@ void Slider::mouseMoveEvent(QMouseEvent *e) {
     int x = e->pos().x();
     int value = (maximum() - minimum()) * x / width() + minimum();
     setValue(value);
-//    QSlider::mouseMoveEvent(e);
+    //    QSlider::mouseMoveEvent(e);
 }
 
 void Slider::mouseReleaseEvent(QMouseEvent *e) {
-//    e->accept();
+    //    e->accept();
     int x = e->pos().x();
     int value = (maximum() - minimum()) * x / width() + minimum();
     setValue(value);
