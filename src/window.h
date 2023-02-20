@@ -2,41 +2,37 @@
 #define WINDOW_H
 
 #include <QWidget>
+
 #include "slider/slider.h"
 
 QT_BEGIN_NAMESPACE
-class QGroupBox;
-class QLabel;
-class QTreeView;
-class QPushButton;
+class QAbstractItemModel;
+class QObject;
 class QSlider;
+class QTreeView;
 QT_END_NAMESPACE
 
-class Window : public QMainWindow
-{
+class Window : public QMainWindow {
     Q_OBJECT
 
-public:
+   public:
     Window();
 
     void resizeColumnToContents();
-    void callUpdateSlider(int pos) {
-        emit requestSliderUpdate(pos);
-    }
-    void contextMenu(const QPoint &pos);
+    void callUpdateSlider(int pos) { emit requestSliderUpdate(pos); }
 
-signals:
+   signals:
     void requestSliderUpdate(int pos);
 
-private slots:
+   private slots:
     void setVolume();
-    void seek();
+    void setPosition();
     void addFiles();
     void addFolder();
     void doubleClicked();
-    void updateSlider(int pos);
+    void updatePositionSlider(int pos);
 
-private:
+   private:
     QMenu *fileMenu;
     QAction *exitAction;
     QAction *addFilesAction;
@@ -52,15 +48,17 @@ private:
     QMenu *helpMenu;
     QAction *aboutAction;
 
-    QTreeView *filesView;
-    QPushButton *addFileButton;
-    QPushButton *addFolderButton;
     QSlider *volumeSlider;
     Slider *positionSlider;
-    QString m_settingsFile;
-    QStringList audioFiles;
+    QTreeView *filesView;
 
+    QString settingsFile;
+
+    void contextMenu(const QPoint &pos);
     void createMenu();
+    void createToolbar();
+    void createFilesView();
+    QAbstractItemModel *createAudioFileModel(QObject *parent);
     void about();
     void saveFiles();
     void clear();
@@ -73,4 +71,4 @@ private:
     void play();
 };
 
-#endif // WINDOW_H
+#endif  // WINDOW_H
