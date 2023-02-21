@@ -104,8 +104,6 @@ AudioState audio_state;
 
 void audio_state_init(AudioState *audio_state) { audio_state->mutex = SDL_CreateMutex(); }
 
-long long cnt = 0;
-
 int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
     AVFrame *frame = av_frame_alloc();
 
@@ -155,7 +153,6 @@ void audio_callback(void *userdata, Uint8 *stream, int size) {
     AudioState *audio_state = (AudioState *)userdata;
     SDL_LockMutex(audio_state->mutex);
     while (size > 0) {
-        fprintf(stderr, "audio_callback %d\n", ++cnt);
         if (audio_state->audio_buf_index >= audio_state->audio_buf_size) {
             int audio_size = audio_decode_frame(audio_state, audio_buf);
             if (audio_size < 0) {
