@@ -27,6 +27,7 @@ struct PacketQueue {
     SDL_mutex *mutex;
     SDL_cond *cond;
     std::queue<AVPacket *> q;
+    bool abort_request;
 };
 
 PacketQueue audioq;
@@ -56,7 +57,7 @@ void packet_queue_clear(PacketQueue *pq) {
 int packet_queue_get(PacketQueue *pq, AVPacket **packet) {
     int result = -1;
     SDL_LockMutex(pq->mutex);
-    while (!quit) {
+    while (!quit && !pq->abort_request) {
         if (pq->q.empty()) {
             SDL_CondWait(pq->cond, pq->mutex);
         } else {
@@ -68,6 +69,19 @@ int packet_queue_get(PacketQueue *pq, AVPacket **packet) {
     }
     SDL_UnlockMutex(pq->mutex);
     return result;
+}
+
+void packet_queue_abort(PacketQueue *pq) {
+    SDL_LockMutex(pq->mutex);
+    pq->abort_request = true;
+    SDL_CondSignal(pq->cond);
+    SDL_UnlockMutex(pq->mutex);
+}
+
+void packet_queue_start(PacketQueue *pq) {
+    SDL_LockMutex(pq->mutex);
+    pq->abort_request = false;
+    SDL_UnlockMutex(pq->mutex);
 }
 
 struct AudioState {
@@ -89,6 +103,8 @@ struct AudioState {
 AudioState audio_state;
 
 void audio_state_init(AudioState *audio_state) { audio_state->mutex = SDL_CreateMutex(); }
+
+long long cnt = 0;
 
 int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
     AVFrame *frame = av_frame_alloc();
@@ -125,9 +141,6 @@ int audio_decode_frame(AudioState *audio_state, uint8_t *audio_buf) {
                                      audio_state->duration);  // emit an event to be executed in the UI thread
         }
 
-        //        fprintf(stderr, "clock: %f\n", audio_state->audio_clock);
-        //        fprintf(stderr, "clock: %f\n", audio_state->duration);
-
         if (avcodec_send_packet(audio_state->codecCtx, pkt) < 0) {
             return -1;
         }
@@ -142,6 +155,7 @@ void audio_callback(void *userdata, Uint8 *stream, int size) {
     AudioState *audio_state = (AudioState *)userdata;
     SDL_LockMutex(audio_state->mutex);
     while (size > 0) {
+        fprintf(stderr, "audio_callback %d\n", ++cnt);
         if (audio_state->audio_buf_index >= audio_state->audio_buf_size) {
             int audio_size = audio_decode_frame(audio_state, audio_buf);
             if (audio_size < 0) {
@@ -166,6 +180,12 @@ void audio_callback(void *userdata, Uint8 *stream, int size) {
 }
 
 int open_file(const char *filename) {
+    SDL_AudioDeviceID device_id = audio_state.device_id;
+    if (device_id) {
+        SDL_CloseAudioDevice(device_id);
+    }
+    packet_queue_start(&audioq);
+
     packet_queue_clear(&audioq);
     AVFormatContext *formatCtx = audio_state.formatCtx;
     if (formatCtx) {
@@ -248,10 +268,6 @@ int open_file(const char *filename) {
     wanted_spec.userdata = &audio_state;
 
     SDL_AudioSpec spec;
-    SDL_AudioDeviceID device_id = audio_state.device_id;
-    if (device_id) {
-        SDL_CloseAudioDevice(device_id);
-    }
     device_id = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, 0);
     if (!device_id) {
         fprintf(stderr, "SDL_OpenAudioDevice: %s\n", SDL_GetError());
@@ -272,6 +288,7 @@ int open_file(const char *filename) {
 int decode_thread(void *arg) {
     while (true) {
         if (new_file) {
+            packet_queue_abort(&audioq);
             SDL_LockMutex(audio_state.mutex);
             open_file(filename);
             SDL_UnlockMutex(audio_state.mutex);
@@ -292,6 +309,7 @@ int decode_thread(void *arg) {
         if (audio_state.formatCtx) {
             AVPacket *packet = av_packet_alloc();
             if (av_read_frame(audio_state.formatCtx, packet) < 0) {
+                av_packet_free(&packet);
                 SDL_UnlockMutex(audio_state.mutex);
                 SDL_Delay(100);
                 continue;
@@ -303,6 +321,7 @@ int decode_thread(void *arg) {
             }
         }
         SDL_UnlockMutex(audio_state.mutex);
+        SDL_Delay(1);
     }
 
     return 0;
