@@ -32,7 +32,7 @@ struct PacketQueue {
 
 PacketQueue audioq;
 SwrContext *swr;
-char *filename;
+char *filename = (char *) "";
 std::atomic_bool new_file(false), quit(false);
 Window *window;
 
@@ -98,6 +98,7 @@ struct AudioState {
     int audio_buf_size;
     int audio_buf_index;
     SDL_AudioDeviceID device_id;
+    bool playing;
 };
 
 AudioState audio_state;
@@ -174,6 +175,16 @@ void audio_callback(void *userdata, Uint8 *stream, int size) {
         audio_state->audio_buf_index += len;
     }
     SDL_UnlockMutex(audio_state->mutex);
+}
+
+void pause_sdl() {
+    SDL_PauseAudioDevice(audio_state.device_id, 1);
+    audio_state.playing = false;
+}
+
+void resume_sdl() {
+    SDL_PauseAudioDevice(audio_state.device_id, 0);
+    audio_state.playing = true;
 }
 
 int open_file(const char *filename) {
@@ -277,7 +288,7 @@ int open_file(const char *filename) {
         return -1;
     }
 
-    SDL_PauseAudioDevice(device_id, 0);
+    resume_sdl();
 
     return 0;
 }
