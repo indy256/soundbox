@@ -42,6 +42,7 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
           xcodebuild -version > CACHE_KEY.txt
+          echo "$QT_VER" >> CACHE_KEY.txt
           echo "CACHE_KEY=`md5 -q CACHE_KEY.txt`" >> $GITHUB_ENV
 
       - name: Qt cache

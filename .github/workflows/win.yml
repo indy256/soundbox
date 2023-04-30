@@ -43,7 +43,8 @@ jobs:
       - name: Save msbuild version
         shell: cmd
         run: |
-          msbuild -version > CACHE_KEY.txt
+          echo %QT_VER% > CACHE_KEY.txt
+          msbuild -version >> CACHE_KEY.txt
 
       - name: Generate cache key
         shell: bash
