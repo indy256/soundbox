@@ -89,6 +89,9 @@ void Window::createToolbar() {
 
     QToolBar *positionToolBar = addToolBar(tr("Position"));
     positionToolBar->addWidget(positionSlider);
+
+    connect(playAct, &QAction::triggered, this, &Window::play);
+    connect(pauseAct, &QAction::triggered, this, &Window::pause);
 }
 
 void Window::createFilesView() {
@@ -219,16 +222,7 @@ void Window::saveFiles() {
 }
 
 void Window::doubleClicked() {
-    QItemSelectionModel *selectionModel = (QItemSelectionModel *)filesView->selectionModel();
-    QAbstractItemModel *model = (QAbstractItemModel *)filesView->model();
-    QModelIndexList selected = selectionModel->selection().indexes();
-    int row = selected[0].row();
-    QString filename = model->data(model->index(row, 0)).toString();
-    QByteArray ba = filename.toUtf8();
-    const char *name = ba.data();
-    ::filename = new char[2000];
-    strcpy(::filename, name);
-    ::new_file = true;
+    play();
 }
 
 void Window::resizeColumnToContents() { filesView->setColumnWidth(0, 350); }
@@ -284,6 +278,23 @@ void Window::writeSettings() {
     settings.setValue("current-index", filesView->currentIndex().row());
 }
 
-void Window::pause() {}
+void Window::pause() {
+    pause_sdl();
+}
 
-void Window::play() {}
+void Window::play() {
+    QItemSelectionModel *selectionModel = (QItemSelectionModel *)filesView->selectionModel();
+    QAbstractItemModel *model = (QAbstractItemModel *)filesView->model();
+    QModelIndexList selected = selectionModel->selection().indexes();
+    int row = selected[0].row();
+    QString filename = model->data(model->index(row, 0)).toString();
+    QByteArray ba = filename.toUtf8();
+    const char *name = ba.data();
+    if (!strcmp(::filename, name) && !audio_state.playing) {
+        resume_sdl();
+    } else {
+        ::filename = new char[2000];
+        strcpy(::filename, name);
+        ::new_file = true;
+    }
+}
