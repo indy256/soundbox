@@ -13,7 +13,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     env:
-      QT_VER: "6.4.0"
+      QT_VER: "6.5.0"
       UNGUARDED: "-Werror=unguarded-availability-new"
     steps:
       - name: Get repository name
